@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color: #2d3440;
+    background:
+      radial-gradient(circle at top left, rgba(216, 244, 241, 0.95), transparent 30%),
+      radial-gradient(circle at 85% 10%, rgba(194, 107, 111, 0.16), transparent 18%),
+      radial-gradient(circle at 50% 100%, rgba(137, 222, 212, 0.24), transparent 22%),
+      linear-gradient(180deg, #fcfefd 0%, #f4f8f7 100%);
+    font-family: "Manrope", "Segoe UI", "Helvetica Neue", sans-serif;
+    line-height: 1.5;
+    font-weight: 500;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  body {
+    @apply m-0 min-h-screen text-ink;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .panel-card {
+    @apply rounded-3xl border border-line bg-shell shadow-soft;
+    backdrop-filter: blur(8px);
+  }
+
+  .panel-title {
+    @apply text-lg font-extrabold tracking-tight text-ink;
+  }
+
+  .bullet-list {
+    @apply space-y-3 text-[15px] leading-7 text-slate-700;
+  }
+
+  .bullet-list li {
+    @apply relative pl-5;
+  }
+
+  .bullet-list li::before {
+    @apply absolute left-0 top-[11px] h-2 w-2 rounded-full bg-current content-[''];
+  }
+
+  .subtle-grid {
+    background-image:
+      linear-gradient(rgba(59, 200, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 200, 184, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
