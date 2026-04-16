@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 load_dotenv()
+
+
+def _split_csv_env(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _normalize_origin(value: str) -> str:
+    return value.rstrip("/")
 
 
 class Settings(BaseModel):
@@ -19,15 +28,27 @@ class Settings(BaseModel):
         default_factory=lambda: int(os.getenv("MAX_FILE_SIZE_MB", "10"))
     )
     storage_backend: str = Field(default_factory=lambda: os.getenv("STORAGE_BACKEND", "memory"))
+    frontend_url: str = Field(default_factory=lambda: os.getenv("FRONTEND_URL", ""))
     allow_origins: list[str] = Field(
         default_factory=lambda: [
-            origin.strip()
-            for origin in os.getenv(
-                "ALLOW_ORIGINS",
-                "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
-            ).split(",")
-            if origin.strip()
+            _normalize_origin(origin)
+            for origin in _split_csv_env(
+                os.getenv(
+                    "ALLOW_ORIGINS",
+                    ",".join(
+                        [
+                            "http://localhost:3000",
+                            "http://127.0.0.1:3000",
+                            "http://localhost:5173",
+                            "http://127.0.0.1:5173",
+                        ]
+                    ),
+                )
+            )
         ]
+    )
+    allow_origin_regex: Optional[str] = Field(
+        default_factory=lambda: os.getenv("ALLOW_ORIGIN_REGEX") or None
     )
     request_timeout_seconds: float = Field(
         default_factory=lambda: float(os.getenv("REQUEST_TIMEOUT_SECONDS", "90"))
@@ -43,6 +64,13 @@ class Settings(BaseModel):
     @property
     def max_file_size_bytes(self) -> int:
         return self.max_file_size_mb * 1024 * 1024
+
+    @property
+    def cors_allow_origins(self) -> list[str]:
+        origins = list(self.allow_origins)
+        if self.frontend_url:
+            origins.append(_normalize_origin(self.frontend_url))
+        return list(dict.fromkeys(origins))
 
 
 @lru_cache
