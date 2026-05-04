@@ -19,6 +19,7 @@ La configuración sigue la recomendación actual de Vercel para monorepos: un pr
 - Respuesta estructurada en JSON con datos personales, dominios funcionales, códigos CIF y recomendaciones laborales.
 - Persistencia simple en memoria para consultar resultados por ID.
 - Exportación opcional del análisis como HTML.
+- Descarga de PDF del análisis generado.
 - Pruebas básicas con `pytest`.
 
 ## Estructura
@@ -131,6 +132,7 @@ Swagger del backend quedará disponible en:
 - `GET /api/v1/analyses/{analysis_id}`
 - `POST /api/v1/analyses/{analysis_id}/regenerate`
 - `GET /api/v1/analyses/{analysis_id}/html`
+- `GET /api/v1/analyses/{analysis_id}/pdf`
 
 ## Flujo de análisis
 
@@ -148,6 +150,12 @@ curl -X POST "http://127.0.0.1:8000/api/v1/analyses" ^
   -H "accept: application/json" ^
   -H "Content-Type: multipart/form-data" ^
   -F "file=@certificado.pdf"
+```
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/v1/analyses/{analysis_id}/pdf" ^
+  -H "accept: application/pdf" ^
+  --output informe_laboral_inclusivo.pdf
 ```
 
 ## Pruebas
@@ -225,3 +233,4 @@ Variable de entorno obligatoria del frontend:
 - El endpoint `/upload` valida el archivo pero no lo almacena definitivamente.
 - El servicio OpenAI está implementado con `httpx` contra `POST /v1/chat/completions`.
 - El HTML exportado está pensado como respaldo o vista rápida; el frontend puede renderizar el JSON principal.
+- El PDF usa HTML de impresión con fondo blanco y prioriza `weasyprint`, con `pdfkit` como alternativa.

@@ -91,5 +91,13 @@ def test_pdf_export_returns_pdf_attachment(client):  # noqa: ANN001
     pdf_response = client.get(f"/api/v1/analyses/{analysis_id}/pdf")
     assert pdf_response.status_code == 200
     assert pdf_response.headers["content-type"] == "application/pdf"
-    assert "attachment;" in pdf_response.headers["content-disposition"].lower()
+    assert (
+        pdf_response.headers["content-disposition"]
+        == 'attachment; filename="informe_laboral_inclusivo.pdf"'
+    )
     assert pdf_response.content.startswith(b"%PDF")
+
+
+def test_pdf_export_returns_404_for_unknown_analysis(client):  # noqa: ANN001
+    pdf_response = client.get("/api/v1/analyses/no-existe/pdf")
+    assert pdf_response.status_code == 404

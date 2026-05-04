@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from html import escape
+import re
 
 from app.schemas.analysis import CertificateAnalysisSchema
 
@@ -102,6 +103,224 @@ class HTMLExportService:
 </body>
 </html>
 """.strip()
+
+    def render_pdf_document(self, analysis: CertificateAnalysisSchema) -> str:
+        sections = self.pdf_sections(analysis)
+
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Informe laboral inclusivo</title>
+  <style>
+    @page {{
+      size: A4;
+      margin: 1.6cm;
+    }}
+    body {{
+      margin: 0;
+      background: #ffffff;
+      color: #1f1f1f;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.5;
+    }}
+    .document {{
+      width: 100%;
+    }}
+    h1 {{
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 700;
+    }}
+    h2 {{
+      margin: 18px 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #000000;
+    }}
+    p {{
+      margin: 0 0 10px;
+    }}
+    ul {{
+      margin: 0;
+      padding-left: 18px;
+    }}
+    li {{
+      margin-bottom: 5px;
+    }}
+    .section {{
+      margin-bottom: 10px;
+    }}
+    .section strong {{
+      font-weight: 700;
+    }}
+    .note {{
+      margin-top: 18px;
+      font-size: 10px;
+      color: #4a4a4a;
+    }}
+  </style>
+</head>
+<body>
+  <main class="document">
+    <h1>Informe laboral inclusivo</h1>
+    <p>Documento generado a partir del análisis del certificado de discapacidad.</p>
+    {''.join(self._render_pdf_section(section) for section in sections)}
+    <p class="note">Nota final: Este informe es una orientación laboral basada en la información disponible del certificado y debe complementarse con criterio humano y validación profesional.</p>
+  </main>
+</body>
+</html>
+""".strip()
+
+    def pdf_sections(self, analysis: CertificateAnalysisSchema) -> list[dict[str, object]]:
+        persona = analysis.persona
+        analisis = analysis.analisis
+        general_items = [
+            f"Nombre completo: {persona.nombre_completo or 'No disponible'}",
+            f"Documento: {persona.documento or 'No disponible'}",
+            f"Municipio: {persona.municipio or 'No disponible'}",
+            f"Departamento: {persona.departamento or 'No disponible'}",
+            f"Fecha certificación: {persona.fecha_certificacion or 'No disponible'}",
+            f"IPS certificadora: {persona.ips_certificadora or 'No disponible'}",
+            "Discapacidades activas: "
+            + (", ".join(analysis.discapacidades_activas) or "No disponible"),
+        ]
+        if analysis.metadata.fecha_procesamiento is not None:
+            general_items.append(
+                "Fecha de procesamiento: "
+                + analysis.metadata.fecha_procesamiento.strftime("%Y-%m-%d %H:%M UTC")
+            )
+
+        return [
+            {
+                "title": "Datos generales",
+                "kind": "list",
+                "items": general_items,
+            },
+            {
+                "title": "Resumen funcional",
+                "kind": "paragraph",
+                "text": analisis.perfil_funcionamiento
+                or "Sin información estructurada.",
+            },
+            {
+                "title": "Habilidades y capacidades",
+                "kind": "list",
+                "items": self._capabilities_items(analysis),
+            },
+            {
+                "title": "Apoyos requeridos / elementos de apoyo",
+                "kind": "list",
+                "items": self._support_items(analysis),
+            },
+            {
+                "title": "Tareas recomendadas",
+                "kind": "list",
+                "items": self._recommended_items(analysis),
+            },
+            {
+                "title": "Tareas no recomendadas",
+                "kind": "list",
+                "items": analisis.tareas_no_recomendadas or ["Sin información."],
+            },
+            {
+                "title": "Ajustes razonables",
+                "kind": "list",
+                "items": [
+                    f"{item.titulo}: {item.descripcion}. Fundamento: {item.fundamento}"
+                    for item in analisis.ajustes_razonables
+                ]
+                or ["Sin información."],
+            },
+            {
+                "title": "Observaciones específicas",
+                "kind": "list",
+                "items": self._observation_items(analysis),
+            },
+            {
+                "title": "Recomendaciones para RRHH y SST",
+                "kind": "list",
+                "items": analisis.recomendaciones_rrhh_sst or ["Sin información."],
+            },
+        ]
+
+    def extract_body_content(self, html: str) -> str:
+        match = re.search(r"<body[^>]*>(?P<body>.*)</body>", html, flags=re.IGNORECASE | re.DOTALL)
+        return match.group("body") if match else html
+
+    def _render_pdf_section(self, section: dict[str, object]) -> str:
+        title = escape(str(section["title"]))
+        kind = str(section["kind"])
+        if kind == "paragraph":
+            text = escape(str(section.get("text") or "Sin información."))
+            return (
+                f'<section class="section"><h2>{title}</h2><p>{text}</p></section>'
+            )
+
+        items = section.get("items") or ["Sin información."]
+        rendered_items = "".join(
+            f"<li>{escape(str(item))}</li>" for item in items if str(item).strip()
+        ) or "<li>Sin información.</li>"
+        return f'<section class="section"><h2>{title}</h2><ul>{rendered_items}</ul></section>'
+
+    def _list_items(self, items: list[str]) -> str:
+        cleaned = [item.strip() for item in items if item and item.strip()]
+        if not cleaned:
+            cleaned = ["Sin información."]
+        return "".join(f"<li>{escape(item)}</li>" for item in cleaned)
+
+    def _recommended_items(self, analysis: CertificateAnalysisSchema) -> list[str]:
+        tasks = analysis.analisis.tareas_recomendadas
+        items = [
+            f"Administrativo / oficina: {item}"
+            for item in tasks.administrativo_oficina
+        ]
+        items.extend(
+            f"Operativo / manual liviano: {item}"
+            for item in tasks.operativo_manual_liviano
+        )
+        items.extend(f"Relacional / apoyo: {item}" for item in tasks.relacional_apoyo)
+        return items or ["Sin informacion."]
+
+    def _capabilities_items(self, analysis: CertificateAnalysisSchema) -> list[str]:
+        recommended = self._recommended_items(analysis)
+        if recommended and recommended != ["Sin informacion."]:
+            return [
+                "Capacidad para desempeñarse en tareas consistentes con las recomendaciones del análisis.",
+                *recommended,
+            ]
+
+        return [
+            "No se identificaron capacidades funcionales adicionales distintas al resumen del análisis.",
+        ]
+
+    def _support_items(self, analysis: CertificateAnalysisSchema) -> list[str]:
+        items = [
+            f"{item.titulo}: {item.descripcion}"
+            for item in analysis.analisis.ajustes_razonables
+        ]
+        return items or ["Sin información."]
+
+    def _observation_items(self, analysis: CertificateAnalysisSchema) -> list[str]:
+        observations: list[str] = []
+        if analysis.discapacidades_activas:
+            observations.append(
+                "Las discapacidades activas identificadas en el certificado fueron: "
+                + ", ".join(analysis.discapacidades_activas)
+            )
+        if analysis.codigos_cif.actividades_participacion:
+            observations.append(
+                "Se identificaron códigos CIF de actividades/participación: "
+                + ", ".join(analysis.codigos_cif.actividades_participacion)
+            )
+        if analysis.metadata.estado:
+            observations.append(
+                "Estado del análisis registrado: " + analysis.metadata.estado
+            )
+
+        return observations or ["Sin observaciones específicas adicionales."]
 
 
 def get_html_export_service() -> HTMLExportService:

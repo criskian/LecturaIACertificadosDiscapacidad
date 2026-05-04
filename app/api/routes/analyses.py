@@ -164,6 +164,6 @@ async def export_analysis_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": 'attachment; filename="informe-laboral-inclusivo.pdf"'
+            "Content-Disposition": 'attachment; filename="informe_laboral_inclusivo.pdf"'
         },
     )
