@@ -12,7 +12,13 @@ from app.services.storage import InMemoryAnalysisStorage
 
 
 class DummyPipeline:
-    async def analyze(self, payload):  # noqa: ANN001
+    async def analyze(
+        self,
+        payload,
+        *,
+        form_payload=None,
+        observations=None,
+    ):  # noqa: ANN001
         return CertificateAnalysisSchema.model_validate(
             {
                 "persona": {
@@ -33,7 +39,6 @@ class DummyPipeline:
                     {"nombre": "Múltiple", "marcado": "NO"},
                 ],
                 "discapacidades_activas": ["Física"],
-                "discapacidades_activas": ["Discapacidad física"],
                 "dominios": {
                     "cognicion": 20,
                     "movilidad": 45,

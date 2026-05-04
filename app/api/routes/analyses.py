@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import HTMLResponse, Response
 
 from app.api.dependencies import (
     get_analysis_storage,
     get_export_service,
     get_file_service,
+    get_pdf_service,
     get_pipeline,
 )
 from app.models.analysis_record import AnalysisRecord
@@ -20,6 +21,7 @@ from app.schemas.analysis import (
 from app.services.analysis_pipeline import CertificateAnalysisPipeline
 from app.services.file_service import FileService
 from app.services.html_exporter import HTMLExportService
+from app.services.pdf_exporter import PDFExportService
 from app.services.storage import InMemoryAnalysisStorage
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
@@ -53,12 +55,22 @@ async def upload_certificate(
 @router.post("", response_model=AnalysisCreateResponse, status_code=status.HTTP_201_CREATED)
 async def analyze_certificate(
     file: UploadFile = File(...),
+    form_file: UploadFile | None = File(default=None),
+    observations: str | None = Form(default=None),
     file_service: FileService = Depends(get_file_service),
     pipeline: CertificateAnalysisPipeline = Depends(get_pipeline),
     storage: InMemoryAnalysisStorage = Depends(get_analysis_storage),
 ) -> AnalysisCreateResponse:
     payload = await file_service.read_and_validate(file)
-    analysis = await pipeline.analyze(payload)
+    form_payload = None
+    if form_file is not None:
+        form_payload = await file_service.read_and_validate(form_file)
+
+    analysis = await pipeline.analyze(
+        payload,
+        form_payload=form_payload,
+        observations=observations,
+    )
     record = storage.create(
         filename=payload.filename,
         content_type=payload.content_type,
@@ -132,3 +144,26 @@ async def export_analysis_html(
             detail="No se encontró un análisis con ese ID.",
         )
     return HTMLResponse(content=exporter.render(record.analysis))
+
+
+@router.get("/{analysis_id}/pdf")
+async def export_analysis_pdf(
+    analysis_id: str,
+    storage: InMemoryAnalysisStorage = Depends(get_analysis_storage),
+    exporter: PDFExportService = Depends(get_pdf_service),
+) -> Response:
+    record = storage.get(analysis_id)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No se encontró un análisis con ese ID.",
+        )
+
+    pdf_bytes = exporter.render(record.analysis)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="informe-laboral-inclusivo.pdf"'
+        },
+    )

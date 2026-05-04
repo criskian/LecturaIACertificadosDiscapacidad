@@ -7,10 +7,14 @@ import { useCertificateAnalysis } from "./hooks/useCertificateAnalysis";
 
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
+  const [formFile, setFormFile] = useState<File | null>(null);
+  const [observations, setObservations] = useState("");
   const { state, error, result, isBusy, submit, reset } = useCertificateAnalysis();
 
   const handleReset = () => {
     setFile(null);
+    setFormFile(null);
+    setObservations("");
     reset();
   };
 
@@ -19,8 +23,12 @@ export default function App() {
       <div className="mx-auto max-w-7xl space-y-6">
         <FileUploadCard
           file={file}
+          formFile={formFile}
+          observations={observations}
           onFileChange={setFile}
-          onAnalyze={() => void submit(file)}
+          onFormFileChange={setFormFile}
+          onObservationsChange={setObservations}
+          onAnalyze={() => void submit(file, formFile, observations)}
           isBusy={isBusy}
         />
 
@@ -43,11 +51,18 @@ export default function App() {
         {state === "loading" && <LoadingView />}
 
         {state === "error" && error && (
-          <ErrorView message={error} onRetry={() => void submit(file)} />
+          <ErrorView
+            message={error}
+            onRetry={() => void submit(file, formFile, observations)}
+          />
         )}
 
         {state === "success" && result && (
-          <AnalysisDashboard analysis={result.analysis} onReset={handleReset} />
+          <AnalysisDashboard
+            analysisId={result.analysisId}
+            analysis={result.analysis}
+            onReset={handleReset}
+          />
         )}
       </div>
     </main>

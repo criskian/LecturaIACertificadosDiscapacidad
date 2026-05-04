@@ -9,9 +9,14 @@ EXCLUSIVAMENTE un JSON válido, sin markdown, sin comentarios y sin texto adicio
 
 REGLAS GENERALES:
 - Fundamenta todo en el certificado.
+- Si se adjunta formulario u observaciones, úsalos solo para complementar, precisar o contextualizar el análisis del certificado.
+- Prioriza siempre el certificado como fuente principal; usa formulario y observaciones como evidencia adicional.
 - Si algo no se lee, deja cadena vacía o usa "ILEGIBLE" según aplique.
 - No emitas "no apto para trabajar".
 - Usa enfoque de inclusión, capacidades preservadas y ajustes razonables.
+- Identifica capacidades conservadas y reflejalas claramente en `perfil_funcionamiento`, `tareas_recomendadas`, `tareas_no_recomendadas` y `ajustes_razonables`.
+- Si aparecen apoyos técnicos o funcionales como silla de ruedas, bastón, caminador, audífonos, implante coclear u otros, incorpóralos de forma explícita en el análisis narrativo y en las recomendaciones.
+- No uses porcentaje de discapacidad como eje principal del resultado, aunque aparezca en el material de entrada.
 - Devuelve SOLO JSON.
 
 REGLAS SOBRE CATEGORÍAS DE DISCAPACIDAD:
@@ -29,8 +34,11 @@ REGLAS OBLIGATORIAS PARA `analisis`:
 - Genera entre 3 y 6 `tareas_no_recomendadas`.
 - Genera 1 párrafo de `perfil_funcionamiento` de 3 a 5 líneas.
 - Genera entre 4 y 6 `recomendaciones_rrhh_sst`.
-- Si la evidencia es limitada, construye recomendaciones conservadoras basadas en dominios y discapacidades activas.
+- Si la evidencia es limitada, construye recomendaciones conservadoras basadas en dominios, discapacidades activas, capacidades preservadas y apoyos identificados.
 - Solo deja una lista vacía cuando realmente no aplique, y evita strings vacíos.
+- Haz que `perfil_funcionamiento` mencione, cuando exista evidencia, capacidades conservadas, restricciones funcionales, apoyos técnicos y necesidades de comunicación o movilidad.
+- Haz que `tareas_recomendadas` y `tareas_no_recomendadas` sean específicas al contexto funcional y no genéricas.
+- Haz que `ajustes_razonables` sean precisos, accionables y coherentes con certificado, formulario y observaciones.
 """.strip()
 
 
@@ -107,11 +115,44 @@ ESTRUCTURA OBLIGATORIA DEL JSON:
 """.strip()
 
 
-def build_user_prompt(*, extracted_text: str, filename: str, used_vision: bool) -> str:
+def build_user_prompt(
+    *,
+    extracted_text: str,
+    filename: str,
+    used_vision: bool,
+    form_text: str | None = None,
+    observations: str | None = None,
+) -> str:
     extraction_note = (
         "El documento se analiza con soporte visual porque el texto extraído es insuficiente o el certificado está escaneado."
         if used_vision
         else "El documento incluye texto extraído automáticamente y también puede apoyarse en la imagen adjunta."
+    )
+    form_section = (
+        f"""
+
+Texto complementario del formulario o entrevista:
+{form_text}
+""".rstrip()
+        if form_text
+        else """
+
+Texto complementario del formulario o entrevista:
+[NO SE ADJUNTO FORMULARIO O NO FUE POSIBLE EXTRAER TEXTO LEGIBLE]
+""".rstrip()
+    )
+    observations_section = (
+        f"""
+
+Observaciones adicionales del evaluador o reclutador:
+{observations}
+""".rstrip()
+        if observations
+        else """
+
+Observaciones adicionales del evaluador o reclutador:
+[SIN OBSERVACIONES ADICIONALES]
+""".rstrip()
     )
     return f"""
 Analiza el certificado adjunto y produce el JSON solicitado.
@@ -122,13 +163,20 @@ Contexto de extracción: {extraction_note}
 IMPORTANTE:
 - Realiza una lectura general del documento completo.
 - Extrae los datos personales, dominios, códigos CIF y análisis laboral.
+- Si existe formulario o entrevista, úsalo para enriquecer el análisis funcional y laboral sin contradecir el certificado salvo que la observación adicional aclare una capacidad conservada o una necesidad de apoyo.
+- Si existen observaciones adicionales, intégralas en el razonamiento para precisar apoyos técnicos, capacidades conservadas, restricciones funcionales y ajustes razonables.
 - En `discapacidades_raw`, si no estás seguro de una fila, usa `ILEGIBLE`.
 - No agregues categorías fuera de la lista esperada.
 - El bloque `analisis` debe venir completo, útil y listo para mostrarse en interfaz.
-- Si la evidencia del certificado es limitada, construye recomendaciones prudentes basadas en dominios y discapacidades activas, sin dejar vacíos.
+- No centres el resultado en porcentajes; centra el resultado en funcionamiento, capacidades, tareas, apoyos y ajustes.
+- Si la evidencia del certificado es limitada, construye recomendaciones prudentes basadas en dominios, discapacidades activas, capacidades conservadas, formulario y observaciones, sin dejar vacíos.
 
 Texto detectado:
 {extracted_text or "[SIN TEXTO LEGIBLE EXTRAÍDO]"}
+
+{form_section}
+
+{observations_section}
 
 {OUTPUT_JSON_SCHEMA_DESCRIPTION}
 """.strip()

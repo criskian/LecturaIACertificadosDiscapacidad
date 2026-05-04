@@ -77,6 +77,10 @@ class FileService:
             return self._extract_from_pdf(payload)
         return self._extract_from_image(payload)
 
+    def extract_supporting_text(self, payload: DocumentPayload) -> str:
+        extracted = self.extract_document_content(payload)
+        return extracted.extracted_text.strip()
+
     def _extract_from_image(self, payload: DocumentPayload) -> ExtractedDocumentContent:
         image_data_url = self._normalize_image_to_data_url(
             payload.raw_bytes, payload.content_type

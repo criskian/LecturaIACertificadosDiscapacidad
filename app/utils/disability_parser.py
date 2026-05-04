@@ -28,6 +28,9 @@ _CATEGORY_MAP = {
     "PSICOSOCIAL": "Psicosocial",
     "SORDOCEGUERA": "Sordoceguera",
     "MULTIPLE": "Múltiple",
+    # Defensive aliases for common mojibake variants.
+    "FÃSICA": "Física",
+    "MÃLTIPLE": "Múltiple",
 }
 
 _MARK_MAP: dict[str, CanonicalMark] = {
@@ -75,6 +78,18 @@ def normalize_mark(value: Any) -> CanonicalMark | None:
     if not isinstance(value, str):
         return None
     return _MARK_MAP.get(normalize_token(value))
+
+
+def _coerce_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        token = normalize_token(value)
+        if token in {"TRUE", "VERDADERO", "SI", "X"}:
+            return True
+        if token in {"FALSE", "FALSO", "NO", ""}:
+            return False
+    return None
 
 
 def _resolve_duplicate(
@@ -152,7 +167,11 @@ def parse_disability_table(payload: dict[str, Any] | None) -> DisabilityProcessi
             )
             continue
 
-        mark = table_row_to_mark(si=item.get("si"), no=item.get("no"))
+        mark = table_row_to_mark(
+            si=item.get("si"),
+            no=item.get("no"),
+            column_marker=item.get("columna_marcada") or item.get("marcado"),
+        )
         existing_mark = normalized_by_category.get(category)
         if existing_mark:
             normalized_by_category[category] = _resolve_duplicate(
@@ -164,13 +183,19 @@ def parse_disability_table(payload: dict[str, Any] | None) -> DisabilityProcessi
     return _build_processing_result(normalized_by_category)
 
 
-def table_row_to_mark(*, si: Any, no: Any) -> CanonicalMark:
-    is_si = bool(si) if isinstance(si, bool) else False
-    is_no = bool(no) if isinstance(no, bool) else False
+def table_row_to_mark(
+    *, si: Any, no: Any, column_marker: Any | None = None
+) -> CanonicalMark:
+    explicit_marker = normalize_mark(column_marker) if column_marker is not None else None
+    if explicit_marker in ALLOWED_MARKS:
+        return explicit_marker
 
-    if is_si and not is_no:
+    is_si = _coerce_bool(si)
+    is_no = _coerce_bool(no)
+
+    if is_si is True and is_no is not True:
         return "SI"
-    if not is_si and is_no:
+    if is_no is True and is_si is not True:
         return "NO"
     return "ILEGIBLE"
 

@@ -1,21 +1,43 @@
+import { useState } from "react";
 import type { Analysis } from "../types/analysis";
-import { DomainMetricCard } from "./DomainMetricCard";
 import { ProfileHeaderCard } from "./ProfileHeaderCard";
 import { RecommendedTasksPanel } from "./RecommendedTasksPanel";
 import { AdjustmentsPanel } from "./AdjustmentsPanel";
 import { NotRecommendedPanel } from "./NotRecommendedPanel";
 import { FunctioningProfilePanel } from "./FunctioningProfilePanel";
 import { HrRecommendationsPanel } from "./HrRecommendationsPanel";
+import { downloadCompanyReportPdf } from "../lib/api";
 
 interface AnalysisDashboardProps {
+  analysisId: string;
   analysis: Analysis;
   onReset: () => void;
 }
 
 export function AnalysisDashboard({
+  analysisId,
   analysis,
   onReset,
 }: AnalysisDashboardProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    setDownloadError(null);
+    try {
+      await downloadCompanyReportPdf(analysisId);
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible descargar el informe PDF.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -31,10 +53,11 @@ export function AnalysisDashboard({
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => window.print()}
-            className="rounded-2xl border border-almia-100 bg-white px-4 py-2 text-sm font-bold text-almia-700 transition hover:bg-almia-50"
+            onClick={() => void handleDownloadPdf()}
+            disabled={isDownloading}
+            className="rounded-2xl border border-almia-100 bg-white px-4 py-2 text-sm font-bold text-almia-700 transition hover:bg-almia-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Imprimir
+            {isDownloading ? "Generando PDF..." : "Descargar informe PDF"}
           </button>
           <button
             type="button"
@@ -46,22 +69,13 @@ export function AnalysisDashboard({
         </div>
       </div>
 
-      <ProfileHeaderCard analysis={analysis} />
+      {downloadError && (
+        <section className="rounded-2xl border border-terracotta-100 bg-terracotta-50/80 px-4 py-3 text-sm text-terracotta-700">
+          {downloadError}
+        </section>
+      )}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        <DomainMetricCard domain="cognicion" value={analysis.dominios.cognicion} />
-        <DomainMetricCard domain="movilidad" value={analysis.dominios.movilidad} />
-        <DomainMetricCard
-          domain="cuidado_personal"
-          value={analysis.dominios.cuidado_personal}
-        />
-        <DomainMetricCard domain="relaciones" value={analysis.dominios.relaciones} />
-        <DomainMetricCard domain="vida_diaria" value={analysis.dominios.vida_diaria} />
-        <DomainMetricCard
-          domain="participacion"
-          value={analysis.dominios.participacion}
-        />
-      </section>
+      <ProfileHeaderCard analysis={analysis} />
 
       <section className="grid gap-5 xl:grid-cols-2">
         <RecommendedTasksPanel tasks={analysis.analisis.tareas_recomendadas} />

@@ -57,6 +57,20 @@ def test_analyze_and_fetch_result(client):  # noqa: ANN001
     assert fetched["analysis"]["metadata"]["estado"] == "success"
 
 
+def test_analyze_accepts_optional_form_and_observations(client):  # noqa: ANN001
+    response = client.post(
+        "/api/v1/analyses",
+        files={
+            "file": ("certificado.png", _build_test_png_bytes(), "image/png"),
+            "form_file": ("entrevista.png", _build_test_png_bytes(), "image/png"),
+        },
+        data={"observations": "Persona oralizada. Usa audifonos."},
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["analysis"]["persona"]["nombre_completo"] == "Ana Perez"
+
+
 def test_html_export_returns_markup(client):  # noqa: ANN001
     analyze_response = client.post(
         "/api/v1/analyses",
@@ -66,3 +80,16 @@ def test_html_export_returns_markup(client):  # noqa: ANN001
     html_response = client.get(f"/api/v1/analyses/{analysis_id}/html")
     assert html_response.status_code == 200
     assert "<html" in html_response.text.lower()
+
+
+def test_pdf_export_returns_pdf_attachment(client):  # noqa: ANN001
+    analyze_response = client.post(
+        "/api/v1/analyses",
+        files={"file": ("certificado.png", _build_test_png_bytes(), "image/png")},
+    )
+    analysis_id = analyze_response.json()["id"]
+    pdf_response = client.get(f"/api/v1/analyses/{analysis_id}/pdf")
+    assert pdf_response.status_code == 200
+    assert pdf_response.headers["content-type"] == "application/pdf"
+    assert "attachment;" in pdf_response.headers["content-disposition"].lower()
+    assert pdf_response.content.startswith(b"%PDF")

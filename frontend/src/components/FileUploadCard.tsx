@@ -2,93 +2,182 @@ import { useRef } from "react";
 
 interface FileUploadCardProps {
   file: File | null;
+  formFile: File | null;
+  observations: string;
   onFileChange: (file: File | null) => void;
+  onFormFileChange: (file: File | null) => void;
+  onObservationsChange: (value: string) => void;
   onAnalyze: () => void;
   isBusy: boolean;
 }
 
 export function FileUploadCard({
   file,
+  formFile,
+  observations,
   onFileChange,
+  onFormFileChange,
+  onObservationsChange,
   onAnalyze,
   isBusy,
 }: FileUploadCardProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const certificateInputRef = useRef<HTMLInputElement | null>(null);
+  const formInputRef = useRef<HTMLInputElement | null>(null);
+
+  const renderFileSummary = (selectedFile: File | null, emptyState: string) =>
+    selectedFile
+      ? `${selectedFile.name} · ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
+      : emptyState;
 
   return (
-    <section className="panel-card overflow-hidden">
-      <div className="grid gap-8 p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
-        <div className="space-y-5">
-          <span className="inline-flex rounded-full bg-almia-50 px-4 py-1 text-sm font-bold text-almia-700">
-            Informe laboral visual
+    <section className="panel-card overflow-hidden bg-white">
+      <div className="bg-gradient-hero px-8 py-10 lg:px-10 lg:py-12">
+        <div className="mx-auto max-w-4xl space-y-4 text-center lg:text-left">
+          <span className="inline-flex rounded-full bg-primary-foam px-4 py-1 text-sm font-bold text-almia-700">
+            Lector inclusivo
           </span>
           <div className="space-y-3">
-            <h1 className="max-w-2xl text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Lectura IA de certificados de discapacidad
             </h1>
-            <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Carga un certificado en imagen o PDF y recibe un dashboard
-              corporativo con perfil funcional, tareas sugeridas, ajustes
-              razonables y recomendaciones para RRHH y SST.
+            <p className="max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+              Carga el certificado, complementa con formulario de entrevista si
+              lo tienes y agrega observaciones específicas para generar un
+              perfil funcional con análisis real desde el backend.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm text-slate-500">
             <span className="rounded-full bg-sage-50 px-3 py-1 font-semibold text-sage-700">
               PDF, JPG, PNG o WEBP
             </span>
-            <span className="rounded-full bg-almia-50 px-3 py-1 font-semibold text-almia-700">
-              Flujo conectado al backend
+            <span className="rounded-full bg-primary-foam px-3 py-1 font-semibold text-almia-700">
+              Análisis real conectado al backend
             </span>
             <span className="rounded-full bg-terracotta-50 px-3 py-1 font-semibold text-terracotta-700">
-              Resultado listo para imprimir
+              Certificado obligatorio, extras opcionales
             </span>
           </div>
         </div>
+      </div>
 
-        <div className="rounded-[28px] border border-dashed border-almia-100 bg-white/85 p-5">
-          <div className="flex h-full flex-col justify-between rounded-[24px] bg-gradient-to-br from-canvas via-white to-almia-50/70 p-5">
+      <div className="p-6 md:p-8 lg:p-10">
+        <div className="rounded-3xl border border-line/80 bg-white p-6 shadow-card md:p-8">
+          <div className="grid gap-6 md:grid-cols-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
-              className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border border-dashed border-almia-200 bg-white px-6 py-10 text-center transition hover:border-almia-300 hover:bg-almia-50/50"
+              onClick={() => certificateInputRef.current?.click()}
+              className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border-2 border-dashed border-almia-200 bg-gradient-soft px-6 py-10 text-center transition hover:border-almia-400 hover:bg-primary-foam/60"
             >
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-[24px] bg-almia-50 text-2xl text-almia-700 transition group-hover:scale-105">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-2xl text-almia-700 transition group-hover:scale-105">
                 ↑
               </div>
               <h2 className="text-lg font-extrabold text-ink">
-                {file ? "Archivo listo para analizar" : "Sube tu certificado"}
+                Subir certificado de discapacidad
               </h2>
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                {file
-                  ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`
-                  : "Arrastra el archivo aquí o selecciónalo desde tu equipo. Validamos formato y enviamos el documento al backend existente."}
+                {renderFileSummary(
+                  file,
+                  "Formatos permitidos: PDF, JPG, PNG o WEBP.",
+                )}
               </p>
+              <span className="mt-4 inline-flex rounded-full bg-white px-4 py-1 text-xs font-bold text-almia-700 shadow-sm">
+                {file ? "Certificado cargado" : "Seleccionar archivo"}
+              </span>
             </button>
 
             <input
-              ref={inputRef}
+              ref={certificateInputRef}
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
               className="hidden"
               onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
             />
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => formInputRef.current?.click()}
+              className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border-2 border-dashed border-almia-200 bg-gradient-soft px-6 py-10 text-center transition hover:border-almia-400 hover:bg-primary-foam/60"
+            >
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-2xl text-almia-700 transition group-hover:scale-105">
+                +
+              </div>
+              <h2 className="text-lg font-extrabold text-ink">
+                Subir formulario de entrevista opcional
+              </h2>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                {renderFileSummary(
+                  formFile,
+                  "Complementa el análisis con información cualitativa del proceso de entrevista.",
+                )}
+              </p>
+              <span className="mt-4 inline-flex rounded-full bg-white px-4 py-1 text-xs font-bold text-almia-700 shadow-sm">
+                {formFile ? "Formulario cargado" : "Seleccionar archivo"}
+              </span>
+            </button>
+
+            <input
+              ref={formInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={(event) => onFormFileChange(event.target.files?.[0] ?? null)}
+            />
+          </div>
+
+          <div className="mt-6">
+            <label
+              htmlFor="observations"
+              className="text-sm font-semibold text-ink"
+            >
+              Observaciones específicas
+            </label>
+            <textarea
+              id="observations"
+              value={observations}
+              onChange={(event) => onObservationsChange(event.target.value)}
+              rows={5}
+              placeholder="Ej: persona oralizada, usa audífonos, requiere intérprete, movilidad conservada en miembros superiores, restricciones de desplazamiento, apoyos familiares, etc."
+              className="mt-2 min-h-[128px] w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-almia-300 focus:ring-2 focus:ring-almia-100"
+            />
+          </div>
+
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foam text-[11px] font-extrabold text-almia-700">
+                  ✓
+                </span>
+                Tus datos se procesan de forma segura y confidencial.
+              </div>
+              <p className="text-xs leading-6 text-slate-500">
+                El certificado sigue siendo obligatorio. El formulario y las
+                observaciones enriquecen el análisis, pero no reemplazan la
+                lectura real del backend.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:min-w-[280px]">
               <button
                 type="button"
                 onClick={onAnalyze}
                 disabled={isBusy}
-                className="inline-flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-r from-almia-400 to-almia-500 px-5 py-3 text-sm font-bold text-white transition hover:from-almia-500 hover:to-almia-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-almia-400 to-almia-500 px-6 py-3 text-sm font-bold text-white transition hover:from-almia-500 hover:to-almia-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isBusy ? "Procesando..." : "Analizar certificado"}
+                {isBusy
+                  ? "Procesando..."
+                  : "Generar perfil laboral inclusivo"}
               </button>
               <button
                 type="button"
-                onClick={() => onFileChange(null)}
-                disabled={!file || isBusy}
+                onClick={() => {
+                  onFileChange(null);
+                  onFormFileChange(null);
+                  onObservationsChange("");
+                }}
+                disabled={(!file && !formFile && !observations.trim()) || isBusy}
                 className="inline-flex items-center justify-center rounded-2xl border border-line bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Limpiar
+                Limpiar campos
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.services.analysis_pipeline import CertificateAnalysisPipeline, get_analysis_pipeline
 from app.services.file_service import FileService
 from app.services.html_exporter import HTMLExportService, get_html_export_service
+from app.services.pdf_exporter import PDFExportService, get_pdf_export_service
 from app.services.storage import InMemoryAnalysisStorage, get_storage
 
 
@@ -20,3 +21,7 @@ def get_analysis_storage() -> InMemoryAnalysisStorage:
 
 def get_export_service() -> HTMLExportService:
     return get_html_export_service()
+
+
+def get_pdf_service() -> PDFExportService:
+    return get_pdf_export_service()

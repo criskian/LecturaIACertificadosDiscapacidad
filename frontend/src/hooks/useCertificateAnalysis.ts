@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
-import { analyzeCertificate, validateCertificateFile } from "../lib/api";
+import {
+  analyzeCertificate,
+  validateCertificateFile,
+  validateOptionalSupportingFile,
+} from "../lib/api";
 import type { AnalysisResult } from "../types/analysis";
 
 type RequestState = "idle" | "loading" | "success" | "error";
@@ -13,7 +17,11 @@ export function useCertificateAnalysis() {
 
   const actions = useMemo(
     () => ({
-      async submit(file: File | null) {
+      async submit(
+        file: File | null,
+        formFile?: File | null,
+        observations?: string,
+      ) {
         const validationError = validateCertificateFile(file);
         if (validationError) {
           setState("error");
@@ -21,11 +29,24 @@ export function useCertificateAnalysis() {
           return;
         }
 
+        const supportingValidationError = validateOptionalSupportingFile(
+          formFile ?? null,
+        );
+        if (supportingValidationError) {
+          setState("error");
+          setError(supportingValidationError);
+          return;
+        }
+
         setState("loading");
         setError(null);
 
         try {
-          const analysisResult = await analyzeCertificate(file!);
+          const analysisResult = await analyzeCertificate({
+            file: file!,
+            formFile,
+            observations,
+          });
           setResult(analysisResult);
           setState("success");
         } catch (caughtError) {

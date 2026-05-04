@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -23,3 +25,5 @@ class OpenAIAnalysisRequest(BaseModel):
     image_data_urls: list[str] = Field(default_factory=list)
     filename: str
     content_type: str
+    observations: Optional[str] = None
+    form_text: Optional[str] = None

@@ -101,6 +101,8 @@ class OpenAIAnalysisService:
                 extracted_text=request.text,
                 filename=request.filename,
                 used_vision=used_vision,
+                form_text=request.form_text,
+                observations=request.observations,
             ),
             image_data_urls=request.image_data_urls,
         )
@@ -126,6 +128,11 @@ class OpenAIAnalysisService:
         try:
             table_payload = await self._call_json_completion(messages)
             result = parse_disability_table(table_payload)
+            if any(item["marcado"] != "ILEGIBLE" for item in result.discapacidades_raw):
+                logger.info(
+                    "La tabla especializada tuvo prioridad sobre la lectura general. activas=%s",
+                    ", ".join(result.discapacidades_activas) or "ninguna",
+                )
             logger.info(
                 "Extracción especializada de discapacidad completada. activas=%s",
                 ", ".join(result.discapacidades_activas) or "ninguna",
