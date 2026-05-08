@@ -25,7 +25,7 @@ export function ProfileHeaderCard({ analysis }: ProfileHeaderCardProps) {
     .filter(Boolean);
   const badges = toDisplayList(
     activeConditions,
-    "Sin categorias activas confirmadas",
+    "Sin condiciones identificadas",
   );
   const hasActiveConditions = activeConditions.length > 0;
 
@@ -45,7 +45,7 @@ export function ProfileHeaderCard({ analysis }: ProfileHeaderCardProps) {
                 {documentLabel}
               </p>
               <p className="text-sm text-slate-500">
-                {location} · Certificado: {certificationDate}
+                {location} - Certificado: {certificationDate}
               </p>
               <p className="text-sm text-slate-500">
                 IPS: {analysis.persona.ips_certificadora || "No disponible"}
@@ -70,8 +70,8 @@ export function ProfileHeaderCard({ analysis }: ProfileHeaderCardProps) {
                 Condiciones de discapacidad identificadas
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                Se muestran unicamente las categorias activas confirmadas por el
-                backend.
+                Se muestran unicamente las condiciones identificadas en el
+                certificado.
               </p>
             </div>
             <div className="inline-flex w-fit items-center rounded-full bg-almia-50 px-4 py-2 text-sm font-bold text-almia-700">
@@ -96,7 +96,7 @@ export function ProfileHeaderCard({ analysis }: ProfileHeaderCardProps) {
                   className="rounded-[26px] border border-almia-100 bg-gradient-to-br from-almia-50 via-white to-almia-100/80 p-4"
                 >
                   <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-almia-700/70">
-                    Condicion activa
+                    Condicion identificada
                   </p>
                   <div className="mt-3">
                     <DisabilityBadge label={item} cardLike />
@@ -110,8 +110,8 @@ export function ProfileHeaderCard({ analysis }: ProfileHeaderCardProps) {
                   certificado.
                 </p>
                 <p className="mt-1">
-                  El dashboard conserva el resto del analisis funcional y
-                  laboral disponible para este solicitante.
+                  El resumen conserva el resto de la informacion funcional y
+                  laboral disponible para esta persona.
                 </p>
               </div>
             )}

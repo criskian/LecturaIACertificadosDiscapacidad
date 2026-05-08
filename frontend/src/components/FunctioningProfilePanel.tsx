@@ -12,7 +12,7 @@ export function FunctioningProfilePanel({
       </header>
       <div className="p-6">
         <p className="whitespace-pre-line text-[15px] leading-8 text-slate-700">
-          {text || "No se recibió descripción detallada del perfil de funcionamiento."}
+          {text || "No se encontro una descripcion detallada del perfil de funcionamiento."}
         </p>
       </div>
     </section>

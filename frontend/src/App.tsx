@@ -35,15 +35,15 @@ export default function App() {
         {state === "idle" && (
           <section className="panel-card border-dashed bg-white/70 p-12 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-sage-50 text-3xl text-sage-700">
-              ✓
+              OK
             </div>
             <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-ink">
-              Estado inicial listo para cargar
+              Todo listo para comenzar
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-              Cuando subas un certificado, aquí aparecerá el dashboard visual con
-              perfil funcional, métricas, tareas recomendadas, ajustes
-              razonables y recomendaciones corporativas.
+              Cuando subas un certificado, aqui aparecera un resumen visual con
+              el perfil funcional, tareas sugeridas, ajustes razonables y
+              recomendaciones para el entorno laboral.
             </p>
           </section>
         )}

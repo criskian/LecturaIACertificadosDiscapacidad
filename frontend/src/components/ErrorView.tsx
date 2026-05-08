@@ -12,7 +12,7 @@ export function ErrorView({ message, onRetry }: ErrorViewProps) {
         </div>
         <div>
           <h2 className="text-2xl font-extrabold text-rose-700">
-            No pudimos completar el análisis
+            No pudimos completar la revision
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-rose-900/75">
             {message}

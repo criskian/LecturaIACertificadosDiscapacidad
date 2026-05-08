@@ -26,7 +26,7 @@ export function FileUploadCard({
 
   const renderFileSummary = (selectedFile: File | null, emptyState: string) =>
     selectedFile
-      ? `${selectedFile.name} · ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
+      ? `${selectedFile.name} - ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
       : emptyState;
 
   return (
@@ -42,8 +42,8 @@ export function FileUploadCard({
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
               Carga el certificado, complementa con formulario de entrevista si
-              lo tienes y agrega observaciones específicas para generar un
-              perfil funcional con análisis real desde el backend.
+              lo tienes y agrega observaciones especificas para generar un
+              perfil funcional con analisis procesado con IA.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm text-slate-500">
@@ -51,7 +51,7 @@ export function FileUploadCard({
               PDF, JPG, PNG o WEBP
             </span>
             <span className="rounded-full bg-primary-foam px-3 py-1 font-semibold text-almia-700">
-              Análisis real conectado al backend
+              Analisis procesado con IA
             </span>
             <span className="rounded-full bg-terracotta-50 px-3 py-1 font-semibold text-terracotta-700">
               Certificado obligatorio, extras opcionales
@@ -69,7 +69,7 @@ export function FileUploadCard({
               className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border-2 border-dashed border-almia-200 bg-gradient-soft px-6 py-10 text-center transition hover:border-almia-400 hover:bg-primary-foam/60"
             >
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-2xl text-almia-700 transition group-hover:scale-105">
-                ↑
+                ^
               </div>
               <h2 className="text-lg font-extrabold text-ink">
                 Subir certificado de discapacidad
@@ -107,7 +107,7 @@ export function FileUploadCard({
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
                 {renderFileSummary(
                   formFile,
-                  "Complementa el análisis con información cualitativa del proceso de entrevista.",
+                  "Complementa el analisis con informacion cualitativa del proceso de entrevista.",
                 )}
               </p>
               <span className="mt-4 inline-flex rounded-full bg-white px-4 py-1 text-xs font-bold text-almia-700 shadow-sm">
@@ -129,14 +129,14 @@ export function FileUploadCard({
               htmlFor="observations"
               className="text-sm font-semibold text-ink"
             >
-              Observaciones específicas
+              Observaciones especificas
             </label>
             <textarea
               id="observations"
               value={observations}
               onChange={(event) => onObservationsChange(event.target.value)}
               rows={5}
-              placeholder="Ej: persona oralizada, usa audífonos, requiere intérprete, movilidad conservada en miembros superiores, restricciones de desplazamiento, apoyos familiares, etc."
+              placeholder="Ej: persona oralizada, usa audifonos, requiere interprete, movilidad conservada en miembros superiores, restricciones de desplazamiento, apoyos familiares, etc."
               className="mt-2 min-h-[128px] w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-almia-300 focus:ring-2 focus:ring-almia-100"
             />
           </div>
@@ -145,14 +145,14 @@ export function FileUploadCard({
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
                 <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foam text-[11px] font-extrabold text-almia-700">
-                  ✓
+                  OK
                 </span>
                 Tus datos se procesan de forma segura y confidencial.
               </div>
               <p className="text-xs leading-6 text-slate-500">
                 El certificado sigue siendo obligatorio. El formulario y las
-                observaciones enriquecen el análisis, pero no reemplazan la
-                lectura real del backend.
+                observaciones enriquecen la lectura del caso, pero no
+                reemplazan la informacion contenida en el certificado.
               </p>
             </div>
 

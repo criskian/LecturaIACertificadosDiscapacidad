@@ -43,10 +43,10 @@ export function AnalysisDashboard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-almia-700/60">
-            Resultado del análisis
+            Resultado del analisis
           </p>
           <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-ink">
-            Dashboard laboral del certificado
+            Resumen laboral del certificado
           </h2>
         </div>
 

@@ -9,7 +9,7 @@ export function HrRecommendationsPanel({
 }: HrRecommendationsPanelProps) {
   const displayItems = toDisplayList(
     items,
-    "No se recibieron recomendaciones específicas para RRHH y SST.",
+    "No se identificaron recomendaciones especificas para RRHH y SST.",
   );
 
   return (

@@ -9,8 +9,8 @@ export function LoadingView() {
               Procesando certificado
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Estamos extrayendo datos, interpretando el perfil funcional y
-              preparando el dashboard visual.
+              Estamos revisando la informacion del certificado y preparando el
+              resumen laboral.
             </p>
           </div>
         </div>
