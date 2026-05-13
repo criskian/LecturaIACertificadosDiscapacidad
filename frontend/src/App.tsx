@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnalysisDashboard } from "./components/AnalysisDashboard";
 import { ErrorView } from "./components/ErrorView";
 import { FileUploadCard } from "./components/FileUploadCard";
+import { CheckIcon } from "./components/Icons";
 import { LoadingView } from "./components/LoadingView";
 import { useCertificateAnalysis } from "./hooks/useCertificateAnalysis";
 
@@ -34,8 +35,8 @@ export default function App() {
 
         {state === "idle" && (
           <section className="panel-card border-dashed bg-white/70 p-12 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-sage-50 text-3xl text-sage-700">
-              OK
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-sage-50 text-sage-700">
+              <CheckIcon className="h-9 w-9" aria-hidden="true" />
             </div>
             <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-ink">
               Todo listo para comenzar

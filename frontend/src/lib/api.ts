@@ -119,7 +119,7 @@ export async function analyzeCertificate({
     });
   } catch {
     throw new Error(
-      "No fue posible procesar el certificado en este momento. Intenta nuevamente en unos minutos.",
+      "No fue posible conectar el frontend con el backend de analisis. Verifica que la API este activa en VITE_API_BASE_URL.",
     );
   }
 

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -12,7 +12,7 @@
       radial-gradient(circle at 85% 10%, rgba(194, 107, 111, 0.16), transparent 18%),
       radial-gradient(circle at 50% 100%, rgba(137, 222, 212, 0.24), transparent 22%),
       linear-gradient(180deg, #fcfefd 0%, #f4f8f7 100%);
-    font-family: "Manrope", "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family: "Poppins", "Segoe UI", "Helvetica Neue", sans-serif;
     line-height: 1.5;
     font-weight: 500;
     text-rendering: optimizeLegibility;

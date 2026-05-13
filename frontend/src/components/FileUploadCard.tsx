@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { CheckIcon, PlusIcon, UploadArrowIcon } from "./Icons";
 
 interface FileUploadCardProps {
   file: File | null;
@@ -68,8 +69,8 @@ export function FileUploadCard({
               onClick={() => certificateInputRef.current?.click()}
               className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border-2 border-dashed border-almia-200 bg-gradient-soft px-6 py-10 text-center transition hover:border-almia-400 hover:bg-primary-foam/60"
             >
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-2xl text-almia-700 transition group-hover:scale-105">
-                ^
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-almia-700 transition group-hover:scale-105">
+                <UploadArrowIcon className="h-7 w-7" aria-hidden="true" />
               </div>
               <h2 className="text-lg font-extrabold text-ink">
                 Subir certificado de discapacidad
@@ -98,8 +99,8 @@ export function FileUploadCard({
               onClick={() => formInputRef.current?.click()}
               className="group flex min-h-[220px] flex-col items-center justify-center rounded-[22px] border-2 border-dashed border-almia-200 bg-gradient-soft px-6 py-10 text-center transition hover:border-almia-400 hover:bg-primary-foam/60"
             >
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-2xl text-almia-700 transition group-hover:scale-105">
-                +
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-almia-700 transition group-hover:scale-105">
+                <PlusIcon className="h-7 w-7" aria-hidden="true" />
               </div>
               <h2 className="text-lg font-extrabold text-ink">
                 Subir formulario de entrevista opcional
@@ -144,8 +145,8 @@ export function FileUploadCard({
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foam text-[11px] font-extrabold text-almia-700">
-                  OK
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foam text-almia-700">
+                  <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
                 Tus datos se procesan de forma segura y confidencial.
               </div>
