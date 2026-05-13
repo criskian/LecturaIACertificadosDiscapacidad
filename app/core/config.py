@@ -18,6 +18,15 @@ def _normalize_origin(value: str) -> str:
     return value.rstrip("/")
 
 
+def _combine_origin_regex(*patterns: str | None) -> Optional[str]:
+    cleaned = [pattern.strip() for pattern in patterns if pattern and pattern.strip()]
+    if not cleaned:
+        return None
+    if len(cleaned) == 1:
+        return cleaned[0]
+    return "|".join(f"(?:{pattern})" for pattern in cleaned)
+
+
 class Settings(BaseModel):
     app_name: str = "Lectura IA Certificados Discapacidad"
     app_version: str = "1.0.0"
@@ -73,6 +82,14 @@ class Settings(BaseModel):
         if self.frontend_url:
             origins.append(_normalize_origin(self.frontend_url))
         return list(dict.fromkeys(origins))
+
+    @property
+    def cors_allow_origin_regex(self) -> Optional[str]:
+        return _combine_origin_regex(
+            self.allow_origin_regex,
+            r"^https://[a-zA-Z0-9-]+\.vercel\.app$",
+            r"^https://([a-zA-Z0-9-]+\.)?almia\.com\.co$",
+        )
 
 
 @lru_cache

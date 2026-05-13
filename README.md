@@ -78,10 +78,10 @@ copy .env.example .env
 ```env
 OPENAI_API_KEY=sk-your-openai-key
 OPENAI_MODEL=gpt-4.1-mini
-FRONTEND_URL=https://tu-frontend.vercel.app
+FRONTEND_URL=https://lecturacertificados.almia.com.co
 MAX_FILE_SIZE_MB=10
-ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
-ALLOW_ORIGIN_REGEX=^https://[a-zA-Z0-9-]+\.vercel\.app$
+ALLOW_ORIGINS=https://lecturacertificados.almia.com.co,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
+ALLOW_ORIGIN_REGEX=^https://([a-zA-Z0-9-]+\.)?almia\.com\.co$|^https://[a-zA-Z0-9-]+\.vercel\.app$
 REQUEST_TIMEOUT_SECONDS=90
 MAX_PDF_PAGES_FOR_VISION=5
 MAX_IMAGE_DIMENSION=1600
@@ -218,7 +218,7 @@ Variable de entorno obligatoria del frontend:
 2. Copia la URL productiva del backend.
 3. Configura `VITE_API_BASE_URL` en el proyecto frontend.
 4. Configura `FRONTEND_URL` en el proyecto backend con la URL productiva del frontend.
-5. Si quieres permitir previews del frontend en Vercel, deja `ALLOW_ORIGIN_REGEX=^https://[a-zA-Z0-9-]+\.vercel\.app$`.
+5. Si quieres permitir el dominio productivo de Almia y previews del frontend, deja `ALLOW_ORIGIN_REGEX=^https://([a-zA-Z0-9-]+\.)?almia\.com\.co$|^https://[a-zA-Z0-9-]+\.vercel\.app$`.
 
 ## Notas de Vercel
 
