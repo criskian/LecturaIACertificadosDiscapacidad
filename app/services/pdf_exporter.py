@@ -7,6 +7,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import ListFlowable, ListItem, Paragraph, SimpleDocTemplate, Spacer
 
+from app.core.logging import logger
 from app.schemas.analysis import CertificateAnalysisSchema
 from app.services.html_exporter import HTMLExportService, get_html_export_service
 
@@ -20,10 +21,18 @@ class PDFExportService:
 
         try:
             return self._render_with_weasyprint(html)
-        except (ImportError, OSError):
+        except Exception as exc:
+            logger.warning(
+                "Fallo la generacion PDF con WeasyPrint. Se intentara fallback. error=%s",
+                exc,
+            )
             try:
                 return self._render_with_pdfkit(html)
-            except (ImportError, OSError):
+            except Exception as fallback_exc:
+                logger.warning(
+                    "Fallo la generacion PDF con pdfkit. Se usara ReportLab. error=%s",
+                    fallback_exc,
+                )
                 return self._render_with_reportlab_fallback(analysis)
 
     def _render_with_weasyprint(self, html: str) -> bytes:

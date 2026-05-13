@@ -85,3 +85,23 @@ def test_pdf_exporter_reportlab_fallback_does_not_use_css_as_visible_text(monkey
     pdf_bytes = exporter.render(analysis)
 
     assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_pdf_exporter_falls_back_on_unexpected_weasyprint_error(monkeypatch) -> None:
+    analysis = _build_analysis()
+    exporter = PDFExportService()
+
+    monkeypatch.setattr(
+        exporter,
+        "_render_with_weasyprint",
+        lambda html: (_ for _ in ()).throw(AttributeError("transform")),
+    )
+    monkeypatch.setattr(
+        exporter,
+        "_render_with_pdfkit",
+        lambda html: (_ for _ in ()).throw(OSError("pdfkit unavailable")),
+    )
+
+    pdf_bytes = exporter.render(analysis)
+
+    assert pdf_bytes.startswith(b"%PDF")
