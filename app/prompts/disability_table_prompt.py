@@ -59,6 +59,7 @@ Instrucciones:
 - Solo una fila debe quedar activa cuando la X visible esté en SI para esa fila.
 - Si una fila tiene la X en NO, esa fila NO es activa.
 - Si no puedes distinguir la posición, usa ambos campos en false.
+- Caso critico de referencia: si Auditiva tiene la X en SI y las demas filas tienen la X en NO, el resultado correcto es unicamente Auditiva activa.
 - Ejemplo crítico:
   Física NO X
   Visual NO X

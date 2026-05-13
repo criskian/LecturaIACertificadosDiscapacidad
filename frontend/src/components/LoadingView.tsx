@@ -3,14 +3,42 @@ export function LoadingView() {
     <section className="space-y-5">
       <div className="panel-card overflow-hidden p-8 sm:p-10">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-100 border-t-blue-500" />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-foam text-almia-700">
+            <div className="absolute inset-0 animate-spin rounded-2xl border-2 border-almia-100 border-t-almia-500" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-6 w-6"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 16V5"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M7.75 9.25L12 5L16.25 9.25"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M5 19H19"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
           <div>
             <h2 className="text-2xl font-extrabold text-ink">
               Procesando certificado
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Estamos extrayendo datos, interpretando el perfil funcional y
-              preparando el dashboard visual.
+              Estamos revisando la informacion del certificado y preparando el
+              resumen laboral.
             </p>
           </div>
         </div>

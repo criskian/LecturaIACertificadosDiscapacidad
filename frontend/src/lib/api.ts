@@ -18,7 +18,7 @@ export interface CertificateAnalysisInput {
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
     throw new Error(
-      "Configura VITE_API_BASE_URL para apuntar al backend de FastAPI.",
+      "La plataforma no tiene configurada la conexion necesaria para procesar certificados.",
     );
   }
   return `${API_BASE_URL}${path}`;
@@ -27,7 +27,7 @@ function buildUrl(path: string): string {
 export async function downloadCompanyReportPdf(analysisId: string): Promise<void> {
   if (!analysisId || analysisId === "sin-id") {
     throw new Error(
-      "No se encontró un identificador válido del análisis para generar el reporte.",
+      "No se encontro un identificador valido del analisis para generar el reporte.",
     );
   }
 
@@ -40,13 +40,13 @@ export async function downloadCompanyReportPdf(analysisId: string): Promise<void
     });
   } catch {
     throw new Error(
-      "No fue posible conectar con el backend para generar el informe PDF.",
+      "No fue posible generar el informe PDF en este momento.",
     );
   }
 
   if (!response.ok) {
     throw new Error(
-      "El backend no pudo generar el informe PDF para este análisis.",
+      "No fue posible preparar el informe PDF para este certificado.",
     );
   }
 
@@ -75,7 +75,7 @@ export function validateCertificateFile(file: File | null): string | null {
   }
 
   if (file.size > MAX_SIZE_BYTES) {
-    return "El archivo supera el límite recomendado de 10 MB.";
+    return "El archivo supera el limite recomendado de 10 MB.";
   }
 
   return null;
@@ -91,7 +91,7 @@ export function validateOptionalSupportingFile(file: File | null): string | null
   }
 
   if (file.size > MAX_SIZE_BYTES) {
-    return "El formulario opcional supera el límite recomendado de 10 MB.";
+    return "El formulario opcional supera el limite recomendado de 10 MB.";
   }
 
   return null;
@@ -119,7 +119,7 @@ export async function analyzeCertificate({
     });
   } catch {
     throw new Error(
-      "No fue posible conectar con el backend. Verifica VITE_API_BASE_URL y el despliegue del API.",
+      "No fue posible conectar el frontend con el backend de analisis. Verifica que la API este activa en VITE_API_BASE_URL.",
     );
   }
 
@@ -127,7 +127,7 @@ export async function analyzeCertificate({
   try {
     payload = await response.json();
   } catch {
-    throw new Error("El servidor respondió en un formato inesperado.");
+    throw new Error("La respuesta del servicio no pudo interpretarse correctamente.");
   }
 
   if (!response.ok) {

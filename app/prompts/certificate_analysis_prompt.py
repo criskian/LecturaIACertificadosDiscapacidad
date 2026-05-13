@@ -12,6 +12,9 @@ REGLAS GENERALES:
 - Si se adjunta formulario u observaciones, úsalos solo para complementar, precisar o contextualizar el análisis del certificado.
 - Prioriza siempre el certificado como fuente principal; usa formulario y observaciones como evidencia adicional.
 - Si algo no se lee, deja cadena vacía o usa "ILEGIBLE" según aplique.
+- Si una discapacidad no esta marcada expresamente como activa en la tabla, no la trates como activa.
+- No inventes discapacidades, restricciones, riesgos ni apoyos que no puedan justificarse con el certificado.
+- No menciones "discapacidad fisica", "discapacidad visual", "discapacidad auditiva", "discapacidad intelectual", "psicosocial" o "multiple" salvo que la categoria este marcada como activa o la tabla sea ilegible y lo digas explicitamente como incierto.
 - No emitas "no apto para trabajar".
 - Usa enfoque de inclusión, capacidades preservadas y ajustes razonables.
 - Identifica capacidades conservadas y reflejalas claramente en `perfil_funcionamiento`, `tareas_recomendadas`, `tareas_no_recomendadas` y `ajustes_razonables`.
@@ -22,6 +25,8 @@ REGLAS GENERALES:
 REGLAS SOBRE CATEGORÍAS DE DISCAPACIDAD:
 - Puedes intentar leer la sección de categorías, pero no inventes marcas.
 - No infieras categorías activas por contexto clínico.
+- Solo considera activa una categoria si la tabla muestra "SI", "Sí", "X" o equivalente en la columna correcta de SI.
+- Si una categoria aparece marcada en NO, esa categoria no puede usarse para recomendaciones, perfil ni restricciones.
 - Si no es claro, usa "ILEGIBLE".
 - El backend aplicará una validación especializada adicional sobre esa tabla.
 
@@ -39,6 +44,10 @@ REGLAS OBLIGATORIAS PARA `analisis`:
 - Haz que `perfil_funcionamiento` mencione, cuando exista evidencia, capacidades conservadas, restricciones funcionales, apoyos técnicos y necesidades de comunicación o movilidad.
 - Haz que `tareas_recomendadas` y `tareas_no_recomendadas` sean específicas al contexto funcional y no genéricas.
 - Haz que `ajustes_razonables` sean precisos, accionables y coherentes con certificado, formulario y observaciones.
+- Nunca recomiendes evitar esfuerzo fisico, movilidad intensa, manipulacion de cargas, operaciones manuales pesadas ni riesgo corporal si no hay evidencia explicita de discapacidad fisica activa o dificultad relevante de movilidad en el certificado.
+- Si la unica categoria activa es Auditiva, centra el analisis en accesibilidad comunicativa, apoyos auditivos o visuales, confirmacion escrita, control de ruido y visibilidad del interlocutor.
+- Si la unica categoria activa es Auditiva, no hables de discapacidad fisica ni impongas restricciones fisicas generales.
+- Si la evidencia es incierta por legibilidad o calidad de imagen, dilo de forma explicita en `perfil_funcionamiento` o en `recomendaciones_rrhh_sst` y evita afirmaciones categóricas no sustentadas.
 """.strip()
 
 
@@ -170,6 +179,9 @@ IMPORTANTE:
 - El bloque `analisis` debe venir completo, útil y listo para mostrarse en interfaz.
 - No centres el resultado en porcentajes; centra el resultado en funcionamiento, capacidades, tareas, apoyos y ajustes.
 - Si la evidencia del certificado es limitada, construye recomendaciones prudentes basadas en dominios, discapacidades activas, capacidades conservadas, formulario y observaciones, sin dejar vacíos.
+- Usa `discapacidades_raw` solo como lectura de la tabla; no infieras una discapacidad activa por sintomas o contexto clinico.
+- Si solo Auditiva esta marcada como activa, el resultado esperado debe hablar de comunicacion accesible y no de restricciones fisicas.
+- Si movilidad esta en 0 o no hay discapacidad fisica activa, no sugieras evitar esfuerzo fisico, desplazamientos, cargue de peso ni tareas manuales pesadas, salvo que exista otra evidencia explicita en el certificado.
 
 Texto detectado:
 {extracted_text or "[SIN TEXTO LEGIBLE EXTRAÍDO]"}
