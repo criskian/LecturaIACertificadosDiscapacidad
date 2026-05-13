@@ -25,6 +25,7 @@ from app.prompts.disability_table_prompt import (
     SYSTEM_PROMPT as DISABILITY_TABLE_SYSTEM_PROMPT,
     build_user_prompt as build_disability_table_user_prompt,
 )
+from app.utils.analysis_guardrails import normalize_analysis_for_certificate
 from app.schemas.analysis import CertificateAnalysisSchema
 from app.schemas.document import OpenAIAnalysisRequest
 from app.utils.analysis_fallback import fallback_build_analysis, is_analysis_empty
@@ -80,6 +81,11 @@ class OpenAIAnalysisService:
         general_payload["discapacidades_raw"] = disability_result.discapacidades_raw
         general_payload["discapacidades_activas"] = disability_result.discapacidades_activas
         general_payload["analisis"] = self._resolve_analysis(general_payload)
+        general_payload["analisis"] = normalize_analysis_for_certificate(
+            general_payload,
+            used_vision=used_vision,
+            observations=request.observations,
+        )
 
         general_payload.setdefault("metadata", {})
         general_payload["metadata"]["modelo_usado"] = self.settings.openai_model
