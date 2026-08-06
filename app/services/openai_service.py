@@ -35,6 +35,11 @@ from app.utils.json_utils import extract_json_object
 
 load_dotenv()
 
+def _model_supports_custom_temperature(model: str) -> bool:
+    normalized = (model or "").lower()
+    return not (normalized.startswith("gpt-5") or normalized.startswith(("o1", "o3", "o4")))
+
+
 EXPECTED_DOMAIN_KEYS = (
     "cognicion",
     "movilidad",
@@ -292,13 +297,16 @@ class OpenAIAnalysisService:
         self,
         messages: list[dict[str, Any]],
     ) -> dict[str, Any]:
+        completion_kwargs: dict[str, Any] = {
+            "model": self.settings.openai_model,
+            "response_format": {"type": "json_object"},
+            "messages": messages,
+        }
+        if _model_supports_custom_temperature(self.settings.openai_model):
+            completion_kwargs["temperature"] = 0.1
+
         try:
-            response = await self.client.chat.completions.create(
-                model=self.settings.openai_model,
-                response_format={"type": "json_object"},
-                temperature=0.1,
-                messages=messages,
-            )
+            response = await self.client.chat.completions.create(**completion_kwargs)
         except AuthenticationError as exc:
             logger.exception("OpenAI rechazó la autenticación.")
             raise HTTPException(
