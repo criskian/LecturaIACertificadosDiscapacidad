@@ -32,12 +32,12 @@ def test_resume_and_form_are_separate_sections() -> None:
         resume_text="Analista de gestion documental con SGDEA.",
     )
 
-    assert "formulario complementario de discapacidad" in prompt
+    assert "Texto complementario de hoja de vida / formulario" in prompt
     assert "Hoja de vida de la persona" in prompt
     assert "Requiere confirmacion escrita" in prompt
     assert "SGDEA" in prompt
     # La hoja de vida se ubica despues del formulario y antes de la entrevista.
-    assert prompt.index("formulario complementario de discapacidad") < prompt.index("SGDEA")
+    assert prompt.index("Texto complementario de hoja de vida / formulario") < prompt.index("SGDEA")
     assert prompt.index("SGDEA") < prompt.index("Notas de entrevista de valoración")
 
 

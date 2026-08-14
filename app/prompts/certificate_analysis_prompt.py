@@ -13,11 +13,8 @@ Ministerio de Trabajo: el tono y el contenido deben sostener ese nivel de exigen
 
 FUENTES DE INFORMACIÓN Y JERARQUÍA:
 - El certificado de discapacidad es la fuente principal y obligatoria; todo el análisis parte de ahí.
-- El formulario complementario de discapacidad es una fuente secundaria: úsalo para precisar apoyos técnicos,
-  capacidades conservadas y necesidades de ajuste declaradas por la persona o el evaluador.
-- La hoja de vida es una fuente secundaria y es la base para fundamentar `tareas_recomendadas` con la trayectoria
-  laboral real: cargos, funciones, herramientas y áreas de experiencia. Nunca la uses para inferir, activar ni
-  descartar categorías de discapacidad.
+- El formulario complementario u hoja de vida (form_text) es una fuente secundaria: úsalo para fundamentar de forma
+  concreta habilidades, tareas recomendadas y ajustes razonables con la trayectoria real de la persona.
 - Las observaciones adicionales o notas de entrevista de valoración son una fuente secundaria: úsalas solo para
   precisar o contextualizar el análisis del certificado, nunca para reemplazarlo. Refiérete a ellas siempre como
   "la entrevista de valoración" o "según lo evidenciado durante la entrevista de valoración"; nunca menciones el
@@ -401,20 +398,20 @@ def build_user_prompt(
     form_section = (
         f"""
 
-Texto del formulario complementario de discapacidad (fuente secundaria):
+Texto complementario de hoja de vida / formulario (fuente secundaria):
 {form_text}
 """.rstrip()
         if form_text
         else """
 
-Texto del formulario complementario de discapacidad (fuente secundaria):
-[NO SE ADJUNTO FORMULARIO O NO FUE POSIBLE EXTRAER TEXTO LEGIBLE]
+Texto complementario de hoja de vida / formulario (fuente secundaria):
+[NO SE ADJUNTO HOJA DE VIDA/FORMULARIO O NO FUE POSIBLE EXTRAER TEXTO LEGIBLE]
 """.rstrip()
     )
     resume_section = (
         f"""
 
-Hoja de vida de la persona (fuente secundaria — base obligatoria para personalizar `tareas_recomendadas` con su experiencia real):
+Hoja de vida de la persona (fuente secundaria):
 {resume_text}
 """.rstrip()
         if resume_text
@@ -460,13 +457,11 @@ IMPORTANTE:
   Para `ips_certificadora` busca la sección "2.1 IPS donde se realiza la certificación" del certificado ÚNICAMENTE — no uses nombres de clínicas de otros documentos adjuntos.
 - Extrae dominios, códigos CIF y análisis laboral.
 - Si existe formulario o entrevista, úsalo para enriquecer el análisis funcional y laboral sin contradecir el certificado salvo que la observación adicional aclare una capacidad conservada o una necesidad de apoyo.
-- Si existe hoja de vida, es OBLIGATORIO usarla para personalizar `tareas_recomendadas`. Extrae de ella cargos
-  anteriores, funciones realizadas, herramientas, sistemas y áreas de experiencia, y nombra las tareas con ese
-  vocabulario real (por ejemplo: "control de calidad", "empaque y etiquetado", "registros operativos",
-  "buenas prácticas de manufactura", o los sistemas y procesos concretos que aparezcan en la hoja de vida).
-  No generes tareas genéricas cuando el perfil laboral real está disponible. No sugieras tareas que la persona
+  Si el formulario o HV incluye historial laboral, cargos anteriores o tareas realizadas, extráelos y úsalos como base
+  para personalizar `tareas_recomendadas`: nombra las tareas con el vocabulario real documentado (por ejemplo:
+  "control de calidad", "empaque y etiquetado", "registros operativos", "buenas prácticas de manufactura").
+  No generes tareas genéricas si el perfil laboral real está disponible. No sugiereas tareas que la persona
   nunca haya realizado ni que contradigan su experiencia documentada.
-  La hoja de vida aporta experiencia laboral: nunca la uses para inferir, activar ni descartar categorías de discapacidad.
 - Si existen observaciones adicionales, intégralas en el razonamiento para precisar apoyos técnicos, capacidades conservadas, restricciones funcionales y ajustes razonables.
 - Si existe historia clínica, úsala para precisar subtipo, apoyos, evolución y recomendaciones, pero nunca para activar categorías de discapacidad no presentes en el certificado.
 - En `discapacidades_raw`, si no estás seguro de una fila, usa `ILEGIBLE`.
