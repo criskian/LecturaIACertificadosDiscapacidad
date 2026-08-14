@@ -12,13 +12,14 @@ from app.services.storage import InMemoryAnalysisStorage
 
 
 class DummyPipeline:
-    async def analyze(
-        self,
-        payload,
-        *,
-        form_payload=None,
-        observations=None,
-    ):  # noqa: ANN001
+    """Doble del pipeline. Acepta cualquier kwarg y registra la llamada, para que
+    agregar una fuente nueva al endpoint no rompa los tests de ruta."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def analyze(self, payload, **kwargs):  # noqa: ANN001
+        self.calls.append({"payload": payload, **kwargs})
         return CertificateAnalysisSchema.model_validate(
             {
                 "persona": {
@@ -83,9 +84,14 @@ class DummyPipeline:
 
 
 @pytest.fixture
-def client() -> Generator[TestClient, None, None]:
+def pipeline() -> DummyPipeline:
+    return DummyPipeline()
+
+
+@pytest.fixture
+def client(pipeline: DummyPipeline) -> Generator[TestClient, None, None]:
     storage = InMemoryAnalysisStorage()
-    app.dependency_overrides[get_pipeline] = lambda: DummyPipeline()
+    app.dependency_overrides[get_pipeline] = lambda: pipeline
     app.dependency_overrides[get_analysis_storage] = lambda: storage
     with TestClient(app) as test_client:
         yield test_client

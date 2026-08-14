@@ -245,6 +245,7 @@ class OpenAIAnalysisService:
                 form_text=request.form_text,
                 observations=request.observations,
                 clinical_text=clinical_text,
+                resume_text=request.resume_text,
             ),
             image_data_urls=request.image_data_urls,
         )

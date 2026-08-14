@@ -73,6 +73,54 @@ def test_analyze_accepts_optional_form_and_observations(client):  # noqa: ANN001
     assert body["analysis"]["persona"]["nombre_completo"] == "Ana Perez"
 
 
+def test_analyze_forwards_resume_and_clinical_text(client, pipeline):  # noqa: ANN001
+    response = client.post(
+        "/api/v1/analyses",
+        files={"file": ("certificado.png", _build_test_png_bytes(), "image/png")},
+        data={
+            "resume_text": "Auxiliar de control de calidad. Empaque y etiquetado.",
+            "clinical_text": "Usa audifonos desde 2019.",
+        },
+    )
+    assert response.status_code == 201
+
+    call = pipeline.calls[-1]
+    assert call["resume_text"] == "Auxiliar de control de calidad. Empaque y etiquetado."
+    assert call["clinical_text"] == "Usa audifonos desde 2019."
+
+
+def test_analyze_prefers_extracted_text_over_uploaded_file(client, pipeline):  # noqa: ANN001
+    # Cuando el cliente ya extrajo el texto, el archivo no debe volver a procesarse.
+    response = client.post(
+        "/api/v1/analyses",
+        files={
+            "file": ("certificado.png", _build_test_png_bytes(), "image/png"),
+            "resume_file": ("hv.png", _build_test_png_bytes(), "image/png"),
+        },
+        data={"resume_text": "Analista de gestion documental."},
+    )
+    assert response.status_code == 201
+
+    call = pipeline.calls[-1]
+    assert call["resume_text"] == "Analista de gestion documental."
+    assert call["resume_payload"] is None
+
+
+def test_analyze_accepts_resume_file_when_no_text_is_sent(client, pipeline):  # noqa: ANN001
+    response = client.post(
+        "/api/v1/analyses",
+        files={
+            "file": ("certificado.png", _build_test_png_bytes(), "image/png"),
+            "resume_file": ("hv.png", _build_test_png_bytes(), "image/png"),
+        },
+    )
+    assert response.status_code == 201
+
+    call = pipeline.calls[-1]
+    assert call["resume_payload"] is not None
+    assert call["resume_payload"].filename == "hv.png"
+
+
 def test_html_export_returns_markup(client):  # noqa: ANN001
     analyze_response = client.post(
         "/api/v1/analyses",
@@ -163,8 +211,9 @@ def test_auditiva_only_guardrails_remove_unsustained_physical_restrictions() -> 
     assert "manipulacion de cargas" not in serialized
     assert "movilidad intensa" not in serialized
     assert "esfuerzo corporal" not in serialized
-    assert "participacion presenta dificultad moderada" in serialized
-    assert "incorporacion gradual" in serialized or "participacion gradual" in serialized
-    assert "audifono" in serialized
+    # El corrector ortografico del guardrail acentua el texto visible.
+    assert "participación presenta dificultad moderada" in serialized
+    assert "incorporación gradual" in serialized or "participación gradual" in serialized
+    assert "audífono" in serialized
     assert "no depender exclusivamente de llamadas" in serialized
     assert "instrucciones escritas" in serialized or "por escrito" in serialized

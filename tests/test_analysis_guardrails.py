@@ -58,9 +58,10 @@ def test_auditiva_only_guardrails_keep_certificate_as_source_of_truth() -> None:
     assert "discapacidad fisica" not in serialized
     assert "manipulacion de cargas" not in serialized
     assert "movilidad intensa" not in serialized
-    assert "participacion presenta dificultad moderada" in serialized
-    assert "incorporacion gradual" in serialized or "participacion gradual" in serialized
-    assert "audifono" in serialized
+    # El corrector ortografico del guardrail acentua el texto visible.
+    assert "participación presenta dificultad moderada" in serialized
+    assert "incorporación gradual" in serialized or "participación gradual" in serialized
+    assert "audífono" in serialized
     assert "no depender exclusivamente de llamadas" in serialized
     assert any(
         "escritas" in item.lower() or "visual" in item.lower()

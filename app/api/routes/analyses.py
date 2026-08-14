@@ -57,7 +57,10 @@ async def analyze_certificate(
     file: UploadFile = File(...),
     form_file: UploadFile | None = File(default=None),
     clinical_file: UploadFile | None = File(default=None),
+    resume_file: UploadFile | None = File(default=None),
     observations: str | None = Form(default=None),
+    resume_text: str | None = Form(default=None),
+    clinical_text: str | None = Form(default=None),
     file_service: FileService = Depends(get_file_service),
     pipeline: CertificateAnalysisPipeline = Depends(get_pipeline),
     storage: InMemoryAnalysisStorage = Depends(get_analysis_storage),
@@ -66,15 +69,23 @@ async def analyze_certificate(
     form_payload = None
     if form_file is not None:
         form_payload = await file_service.read_and_validate(form_file)
+    # Los campos *_text permiten enviar una extracción ya hecha por el cliente, para
+    # formatos que este servicio no lee (DOCX). Si llegan, el archivo ni se procesa.
     clinical_payload = None
-    if clinical_file is not None:
+    if clinical_file is not None and not (clinical_text or "").strip():
         clinical_payload = await file_service.read_and_validate(clinical_file)
+    resume_payload = None
+    if resume_file is not None and not (resume_text or "").strip():
+        resume_payload = await file_service.read_and_validate(resume_file)
 
     analysis = await pipeline.analyze(
         payload,
         form_payload=form_payload,
         clinical_payload=clinical_payload,
+        resume_payload=resume_payload,
         observations=observations,
+        resume_text=resume_text,
+        clinical_text=clinical_text,
     )
     record = storage.create(
         filename=payload.filename,

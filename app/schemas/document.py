@@ -27,3 +27,4 @@ class OpenAIAnalysisRequest(BaseModel):
     content_type: str
     observations: Optional[str] = None
     form_text: Optional[str] = None
+    resume_text: Optional[str] = None
