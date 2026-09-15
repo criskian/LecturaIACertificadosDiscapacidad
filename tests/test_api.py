@@ -106,13 +106,25 @@ def test_pdf_export_returns_404_for_unknown_analysis(client):  # noqa: ANN001
 
 
 def test_pdf_from_saved_analysis_does_not_need_the_in_memory_record(client):  # noqa: ANN001
-    analysis = client.post(
-        "/api/v1/analyses",
-        files={"file": ("certificado.png", _build_test_png_bytes(), "image/png")},
-    ).json()["analysis"]
     # Así lo guarda el frontend: sin discapacidades_raw y con metadata extra.
-    analysis.pop("discapacidades_raw")
-    analysis["metadata"]["recommended_task_labels"] = {"administrativo_oficina": "Oficina"}
+    analysis = {
+        "persona": {"nombre_completo": "Ana Perez", "documento": "123456789"},
+        "discapacidades_activas": ["Física"],
+        "dominios": {"cognicion": 20, "movilidad": 45},
+        "analisis": {
+            "tareas_recomendadas": {"administrativo_oficina": ["Digitación básica"]},
+            "ajustes_razonables": [
+                {"titulo": "Pausas", "descripcion": "Cada 2 horas.", "fundamento": "Movilidad."}
+            ],
+            "perfil_funcionamiento": "Limitación motora moderada.",
+        },
+        "metadata": {
+            "modelo_usado": "test-model",
+            "fecha_procesamiento": "2026-04-15T00:00:00Z",
+            "estado": "success",
+            "recommended_task_labels": {"administrativo_oficina": "Oficina"},
+        },
+    }
 
     pdf_response = client.post("/api/v1/analyses/pdf", json={"analysis": analysis})
 
