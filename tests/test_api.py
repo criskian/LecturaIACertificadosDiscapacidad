@@ -105,6 +105,44 @@ def test_pdf_export_returns_404_for_unknown_analysis(client):  # noqa: ANN001
     assert pdf_response.status_code == 404
 
 
+def test_pdf_from_saved_analysis_does_not_need_the_in_memory_record(client):  # noqa: ANN001
+    analysis = client.post(
+        "/api/v1/analyses",
+        files={"file": ("certificado.png", _build_test_png_bytes(), "image/png")},
+    ).json()["analysis"]
+    # Así lo guarda el frontend: sin discapacidades_raw y con metadata extra.
+    analysis.pop("discapacidades_raw")
+    analysis["metadata"]["recommended_task_labels"] = {"administrativo_oficina": "Oficina"}
+
+    pdf_response = client.post("/api/v1/analyses/pdf", json={"analysis": analysis})
+
+    assert pdf_response.status_code == 200
+    assert pdf_response.headers["content-type"] == "application/pdf"
+    assert pdf_response.content.startswith(b"%PDF")
+
+
+def test_pdf_from_saved_analysis_tolerates_legacy_history_entries(client):  # noqa: ANN001
+    legacy = {
+        "persona": {"nombre_completo": "Caso <Legado> & Cia", "documento": None},
+        "discapacidades_raw": [{"nombre": "Física", "marcado": "Sí"}],
+        "dominios": {"cognicion": None, "movilidad": "140"},
+        "analisis": {
+            "tareas_recomendadas": {"administrativo_oficina": ["Archivo", None]},
+            "ajustes_razonables": [{"titulo": "Pausas"}],
+        },
+        "metadata": {"estado": "Éxito", "fecha_procesamiento": "ayer"},
+    }
+
+    pdf_response = client.post("/api/v1/analyses/pdf", json={"analysis": legacy})
+
+    assert pdf_response.status_code == 200
+    assert pdf_response.content.startswith(b"%PDF")
+
+
+def test_pdf_from_saved_analysis_requires_an_analysis_object(client):  # noqa: ANN001
+    assert client.post("/api/v1/analyses/pdf", json={}).status_code == 422
+
+
 def test_auditiva_only_guardrails_remove_unsustained_physical_restrictions() -> None:
     payload = {
         "discapacidades_raw": [

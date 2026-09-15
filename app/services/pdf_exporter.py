@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from xml.sax.saxutils import escape
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -79,9 +80,9 @@ class PDFExportService:
         )
         story.append(Spacer(1, 0.2 * cm))
         for section in sections:
-            story.append(Paragraph(str(section["title"]), heading))
+            story.append(Paragraph(escape(str(section["title"])), heading))
             if section["kind"] == "paragraph":
-                story.append(Paragraph(str(section.get("text") or "Sin información."), body))
+                story.append(Paragraph(escape(str(section.get("text") or "Sin información.")), body))
             else:
                 items = [
                     str(item)
@@ -91,7 +92,7 @@ class PDFExportService:
                 story.append(
                     ListFlowable(
                         [
-                            ListItem(Paragraph(item, body), leftIndent=8)
+                            ListItem(Paragraph(escape(item), body), leftIndent=8)
                             for item in items
                         ],
                         bulletType="bullet",

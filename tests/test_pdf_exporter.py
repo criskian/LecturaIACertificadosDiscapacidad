@@ -105,3 +105,14 @@ def test_pdf_exporter_falls_back_on_unexpected_weasyprint_error(monkeypatch) -> 
     pdf_bytes = exporter.render(analysis)
 
     assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_pdf_exporter_reportlab_fallback_escapes_markup_in_analysis_text(monkeypatch) -> None:
+    analysis = _build_analysis()
+    analysis.analisis.perfil_funcionamiento = "Usa <img src='/etc/passwd'/> & apoyos"
+    exporter = PDFExportService()
+    boom = lambda html: (_ for _ in ()).throw(OSError("unavailable"))  # noqa: E731
+    monkeypatch.setattr(exporter, "_render_with_weasyprint", boom)
+    monkeypatch.setattr(exporter, "_render_with_pdfkit", boom)
+
+    assert exporter.render(analysis).startswith(b"%PDF")
