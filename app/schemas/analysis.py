@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -84,6 +84,10 @@ class AnalysisCreateResponse(BaseModel):
 class AnalysisRecordResponse(AnalysisCreateResponse):
     created_at: datetime
     updated_at: datetime
+
+
+class AnalysisPdfRequest(BaseModel):
+    analysis: dict[str, Any]
 
 
 class UploadResponse(BaseModel):

@@ -15,6 +15,7 @@ from app.api.dependencies import (
 from app.models.analysis_record import AnalysisRecord
 from app.schemas.analysis import (
     AnalysisCreateResponse,
+    AnalysisPdfRequest,
     AnalysisRecordResponse,
     UploadResponse,
 )
@@ -23,6 +24,7 @@ from app.services.file_service import FileService
 from app.services.html_exporter import HTMLExportService
 from app.services.pdf_exporter import PDFExportService
 from app.services.storage import InMemoryAnalysisStorage
+from app.utils.saved_analysis import coerce_saved_analysis
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -102,6 +104,27 @@ async def analyze_certificate(
     )
 
 
+def _pdf_response(pdf_bytes: bytes) -> Response:
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="informe_laboral_inclusivo.pdf"'
+        },
+    )
+
+
+@router.post("/pdf")
+async def export_saved_analysis_pdf(
+    body: AnalysisPdfRequest,
+    exporter: PDFExportService = Depends(get_pdf_service),
+) -> Response:
+    # Los análisis viven en memoria y se pierden al reiniciar el proceso (o quedan en
+    # otro worker), así que el cliente envía el análisis que ya guardó y el PDF se
+    # genera sin depender de este almacenamiento.
+    return _pdf_response(exporter.render(coerce_saved_analysis(body.analysis)))
+
+
 @router.get("/{analysis_id}", response_model=AnalysisRecordResponse)
 async def get_analysis(
     analysis_id: str,
@@ -175,11 +198,4 @@ async def export_analysis_pdf(
             detail="No se encontró un análisis con ese ID.",
         )
 
-    pdf_bytes = exporter.render(record.analysis)
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": 'attachment; filename="informe_laboral_inclusivo.pdf"'
-        },
-    )
+    return _pdf_response(exporter.render(record.analysis))
