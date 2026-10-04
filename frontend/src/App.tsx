@@ -63,8 +63,7 @@ export default function App() {
         )}
 
         {state === "success" && result && (
-          <AnalysisDashboard
-            analysisId={result.analysisId}
+          <AnalysisDashboard
             analysis={result.analysis}
             onReset={handleReset}
           />

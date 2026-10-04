@@ -7,14 +7,12 @@ import { NotRecommendedPanel } from "./NotRecommendedPanel";
 import { HrRecommendationsPanel } from "./HrRecommendationsPanel";
 import { downloadCompanyReportPdf } from "../lib/api";
 
-interface AnalysisDashboardProps {
-  analysisId: string;
+interface AnalysisDashboardProps {
   analysis: Analysis;
   onReset: () => void;
 }
 
-export function AnalysisDashboard({
-  analysisId,
+export function AnalysisDashboard({
   analysis,
   onReset,
 }: AnalysisDashboardProps) {
@@ -25,7 +23,7 @@ export function AnalysisDashboard({
     setIsDownloading(true);
     setDownloadError(null);
     try {
-      await downloadCompanyReportPdf(analysisId);
+      await downloadCompanyReportPdf(analysis);
     } catch (error) {
       setDownloadError(
         error instanceof Error
