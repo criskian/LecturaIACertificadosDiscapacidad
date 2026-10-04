@@ -1,4 +1,4 @@
-import type { AnalysisResult, BackendAnalyzeResponse } from "../types/analysis";
+import type { Analysis, AnalysisResult, BackendAnalyzeResponse } from "../types/analysis";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
 const ALLOWED_FILE_TYPES = [
@@ -25,19 +25,23 @@ function buildUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
-export async function downloadCompanyReportPdf(analysisId: string): Promise<void> {
-  if (!analysisId || analysisId === "sin-id") {
-    throw new Error(
-      "No se encontro un identificador valido del analisis para generar el reporte.",
-    );
+// El PDF se genera desde el análisis que el navegador ya tiene y no por id: el
+// servicio guarda los análisis en memoria, por proceso, así que con varias réplicas
+// (o tras un reinicio) el id puede no existir en la que atiende la descarga.
+export async function downloadCompanyReportPdf(analysis: Analysis): Promise<void> {
+  if (!analysis) {
+    throw new Error("No hay un analisis disponible para generar el reporte.");
   }
 
   let response: Response;
   try {
-    response = await fetch(buildUrl(`/api/v1/analyses/${analysisId}/pdf`), {
+    response = await fetch(buildUrl("/api/v1/analyses/pdf"), {
+      method: "POST",
       headers: {
         Accept: "application/pdf",
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ analysis }),
     });
   } catch {
     throw new Error(
