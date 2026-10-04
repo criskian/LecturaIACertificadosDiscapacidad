@@ -15,10 +15,11 @@ RUN useradd --system --uid 10001 --home-dir /srv lector
 COPY --from=build /opt/venv /opt/venv
 WORKDIR /srv
 COPY --chown=lector:lector app ./app
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 USER lector
 EXPOSE 8090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=4).status == 200 else 1)"
 # Dos workers como en el EC2. Los análisis viven en memoria por proceso: los
 # clientes generan el PDF con POST /api/v1/analyses/pdf, no por id.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
