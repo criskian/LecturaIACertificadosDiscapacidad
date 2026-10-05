@@ -2,7 +2,8 @@
 # El frontend (frontend/) sigue en Vercel; este workflow no lo toca.
 #
 # Rol en AWS: github-actions-almia-lector (OIDC, sin llaves de larga vida), definido en
-# criskian/almia-infra (envs/prod/lector.tf), con confianza limitada a la rama main.
+# criskian/almia-infra (envs/prod/lector.tf), con confianza limitada a la rama main. Los
+# pasos de despliegue viven en la plantilla criskian/almia-infra/.github/workflows/ecs-deploy.yml.
 name: Deploy Lector (ECS)
 
 on:
@@ -27,13 +28,6 @@ concurrency:
   group: deploy-lector
   cancel-in-progress: false
 
-env:
-  AWS_REGION: us-east-2
-  ECR_REPOSITORY: almia-lector-certificados
-  ECS_CLUSTER: almia-cluster
-  ECS_SERVICE: almia-lector-certificados
-  CONTAINER_NAME: lector
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -46,47 +40,13 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
 
+  # Construir, publicar y desplegar con la plantilla común de criskian/almia-infra.
   deploy:
     needs: test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::050752608083:role/github-actions-almia-lector
-          aws-region: ${{ env.AWS_REGION }}
-
-      - id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push image
-        id: image
-        env:
-          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-        run: |
-          docker build --platform linux/amd64 -t "$IMAGE" .
-          docker push "$IMAGE"
-          echo "uri=$IMAGE" >> "$GITHUB_OUTPUT"
-
-      # La task definition vive en AWS (variables y referencias a Secrets Manager), no en
-      # el repo: se parte de la revisión activa y solo se cambia la imagen.
-      - name: Current task definition
-        run: |
-          aws ecs describe-task-definition --task-definition "$ECS_SERVICE" \
-            --query taskDefinition > task-definition.json
-
-      - id: render
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.image.outputs.uri }}
-
-      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.render.outputs.task-definition }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          service: ${{ env.ECS_SERVICE }}
-          wait-for-service-stability: true
+    uses: criskian/almia-infra/.github/workflows/ecs-deploy.yml@main
+    with:
+      role-arn: arn:aws:iam::050752608083:role/github-actions-almia-lector
+      ecr-repository: almia-lector-certificados
+      services: '[{"service":"almia-lector-certificados","container":"lector"}]'
+      health-url: https://lectorcertificados.almia.com.co/health
