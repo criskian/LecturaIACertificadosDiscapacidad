@@ -95,17 +95,27 @@ jobs:
           MIGRATE_TARGET: ${{ inputs.migrate-target }}
         run: |
           set -euo pipefail
-          docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" -t "$IMAGE" "${{ inputs.context }}"
-          # Para el despliegue si un archivo con secretos acabó en la imagen.
-          if [ -n "$FORBIDDEN" ] && docker run --rm --entrypoint sh "$IMAGE" -c "test -e '$FORBIDDEN'"; then
-            echo "::error::La imagen contiene $FORBIDDEN. Revisa el .dockerignore."
-            exit 1
+          REPO="${{ inputs.ecr-repository }}"
+          # Los tags del repo ECR son inmutables: si este commit ya se construyó (p. ej. main
+          # y staging en el mismo commit), se reutiliza esa imagen en vez de fallar al subirla.
+          exists() { aws ecr describe-images --repository-name "$REPO" --image-ids "imageTag=$1" >/dev/null 2>&1; }
+          if exists "${GITHUB_SHA}"; then
+            echo "La imagen $IMAGE ya existe: se reutiliza"
+          else
+            docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" -t "$IMAGE" "${{ inputs.context }}"
+            # Para el despliegue si un archivo con secretos acabó en la imagen.
+            if [ -n "$FORBIDDEN" ] && docker run --rm --entrypoint sh "$IMAGE" -c "test -e '$FORBIDDEN'"; then
+              echo "::error::La imagen contiene $FORBIDDEN. Revisa el .dockerignore."
+              exit 1
+            fi
+            docker push "$IMAGE"
           fi
-          docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           if [ -n "$MIGRATE_TARGET" ]; then
-            docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" --target "$MIGRATE_TARGET"               -t "$IMAGE-migrate" "${{ inputs.context }}"
-            docker push "$IMAGE-migrate"
+            if ! exists "${GITHUB_SHA}-migrate"; then
+              docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" --target "$MIGRATE_TARGET" -t "$IMAGE-migrate" "${{ inputs.context }}"
+              docker push "$IMAGE-migrate"
+            fi
             echo "migrate-image=$IMAGE-migrate" >> "$GITHUB_OUTPUT"
           else
             echo "migrate-image=$IMAGE" >> "$GITHUB_OUTPUT"
