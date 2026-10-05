@@ -194,7 +194,8 @@ jobs:
 
   health:
     needs: deploy
-    if: inputs.health-url != ''
+    # Un migrate saltado arrastra a los jobs siguientes: hay que mirar el resultado explícito.
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && inputs.health-url != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check the service answers
