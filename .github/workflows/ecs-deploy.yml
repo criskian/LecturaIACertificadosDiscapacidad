@@ -99,6 +99,9 @@ jobs:
           # Los tags del repo ECR son inmutables: si este commit ya se construyó (p. ej. main
           # y staging en el mismo commit), se reutiliza esa imagen en vez de fallar al subirla.
           exists() { aws ecr describe-images --repository-name "$REPO" --image-ids "imageTag=$1" >/dev/null 2>&1; }
+          # Si otro job subió el mismo tag mientras este construía (p. ej. main y staging a la
+          # vez), el push falla por tag inmutable: se da por bueno si el tag ya existe.
+          push() { docker push "$1" || exists "${1##*:}"; }
           if exists "${GITHUB_SHA}"; then
             echo "La imagen $IMAGE ya existe: se reutiliza"
           else
@@ -108,13 +111,13 @@ jobs:
               echo "::error::La imagen contiene $FORBIDDEN. Revisa el .dockerignore."
               exit 1
             fi
-            docker push "$IMAGE"
+            push "$IMAGE"
           fi
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           if [ -n "$MIGRATE_TARGET" ]; then
             if ! exists "${GITHUB_SHA}-migrate"; then
               docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" --target "$MIGRATE_TARGET" -t "$IMAGE-migrate" "${{ inputs.context }}"
-              docker push "$IMAGE-migrate"
+              push "$IMAGE-migrate"
             fi
             echo "migrate-image=$IMAGE-migrate" >> "$GITHUB_OUTPUT"
           else
