@@ -3,7 +3,7 @@
 #
 # Rol en AWS: github-actions-almia-lector (OIDC, sin llaves de larga vida), definido en
 # criskian/almia-infra (envs/prod/lector.tf), con confianza limitada a la rama main. Los
-# pasos de despliegue viven en la plantilla criskian/almia-infra/.github/workflows/ecs-deploy.yml.
+# pasos de despliegue viven en ecs-deploy.yml, copia de la plantilla de criskian/almia-infra.
 name: Deploy Lector (ECS)
 
 on:
@@ -44,7 +44,7 @@ jobs:
   deploy:
     needs: test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    uses: criskian/almia-infra/.github/workflows/ecs-deploy.yml@main
+    uses: ./.github/workflows/ecs-deploy.yml
     with:
       role-arn: arn:aws:iam::050752608083:role/github-actions-almia-lector
       ecr-repository: almia-lector-certificados

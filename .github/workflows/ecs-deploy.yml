@@ -1,0 +1,212 @@
+# Plantilla de despliegue a ECS Fargate (control 53 del TO-BE): construir → ECR →
+# migraciones opcionales como tarea única → servicios ECS uno por uno → health check.
+#
+# FUENTE ÚNICA: criskian/almia-infra/.github/workflows/ecs-deploy.yml. GitHub no deja llamar
+# un workflow de un repo privado de cuenta personal desde otro repo ("workflow was not
+# found"), así que cada repo de servicio lleva una COPIA IDÉNTICA de este archivo y la
+# llama en local. Para cambiarla: editar aquí y copiar con
+# planes-implementacion/scripts/sync-ecs-deploy.sh. Uso:
+#
+#   jobs:
+#     deploy:
+#       uses: ./.github/workflows/ecs-deploy.yml
+#       with:
+#         role-arn: arn:aws:iam::050752608083:role/github-actions-almia-lector
+#         ecr-repository: almia-lector-certificados
+#         services: '[{"service":"almia-lector-certificados","container":"lector"}]'
+#         health-url: https://lectorcertificados.almia.com.co/health
+#
+# El rol OIDC sigue siendo el de cada repo, con las mismas políticas de confianza. Las task definitions viven en AWS (variables y
+# referencias a Secrets Manager): se parte de la revisión activa y solo se cambia la imagen.
+name: ECS deploy (reutilizable)
+
+on:
+  workflow_call:
+    inputs:
+      role-arn:
+        description: Rol OIDC del repo que despliega
+        type: string
+        required: true
+      ecr-repository:
+        type: string
+        required: true
+      services:
+        description: 'JSON: [{"service":"almia-x","container":"x"}], se despliegan en ese orden'
+        type: string
+        required: true
+      dockerfile:
+        type: string
+        default: Dockerfile
+      context:
+        type: string
+        default: .
+      migrate-command:
+        description: 'JSON del comando de migraciones, p. ej. ["npx","prisma","migrate","deploy"]; vacío = sin migraciones'
+        type: string
+        default: ""
+      migrate-target:
+        description: Etapa del Dockerfile con las herramientas de migración (si la imagen final no las trae); vacío = la imagen final
+        type: string
+        default: ""
+      forbidden-path:
+        description: Ruta que NO debe existir en la imagen (p. ej. /app/.env); vacío = sin chequeo
+        type: string
+        default: ""
+      health-url:
+        description: URL que debe responder 2xx tras el despliegue; vacío = sin chequeo
+        type: string
+        default: ""
+      cluster:
+        type: string
+        default: almia-cluster
+      aws-region:
+        type: string
+        default: us-east-2
+    outputs:
+      image:
+        value: ${{ jobs.build.outputs.image }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+      migrate-image: ${{ steps.push.outputs.migrate-image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: push
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ github.sha }}
+          FORBIDDEN: ${{ inputs.forbidden-path }}
+          MIGRATE_TARGET: ${{ inputs.migrate-target }}
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" -t "$IMAGE" "${{ inputs.context }}"
+          # Para el despliegue si un archivo con secretos acabó en la imagen.
+          if [ -n "$FORBIDDEN" ] && docker run --rm --entrypoint sh "$IMAGE" -c "test -e '$FORBIDDEN'"; then
+            echo "::error::La imagen contiene $FORBIDDEN. Revisa el .dockerignore."
+            exit 1
+          fi
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          if [ -n "$MIGRATE_TARGET" ]; then
+            docker build --platform linux/amd64 -f "${{ inputs.dockerfile }}" --target "$MIGRATE_TARGET"               -t "$IMAGE-migrate" "${{ inputs.context }}"
+            docker push "$IMAGE-migrate"
+            echo "migrate-image=$IMAGE-migrate" >> "$GITHUB_OUTPUT"
+          else
+            echo "migrate-image=$IMAGE" >> "$GITHUB_OUTPUT"
+          fi
+
+  migrate:
+    needs: build
+    if: inputs.migrate-command != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      # Registra la task def del primer servicio con la imagen nueva y corre las migraciones
+      # una sola vez, con la red de ese servicio. Solo si terminan con código 0 se sigue.
+      - name: Run migrations as a one-off Fargate task
+        env:
+          IMAGE: ${{ needs.build.outputs.migrate-image }}
+          SERVICES: ${{ inputs.services }}
+          COMMAND: ${{ inputs.migrate-command }}
+          CLUSTER: ${{ inputs.cluster }}
+        run: |
+          set -euo pipefail
+          SERVICE=$(jq -r '.[0].service' <<< "$SERVICES")
+          CONTAINER=$(jq -r '.[0].container' <<< "$SERVICES")
+          aws ecs describe-task-definition --task-definition "$SERVICE" --query taskDefinition > td.json
+          jq --arg img "$IMAGE" --arg c "$CONTAINER" '
+            .containerDefinitions |= map(if .name == $c then .image = $img else . end)
+            | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+               requiresCompatibilities, cpu, memory, runtimePlatform}
+            | with_entries(select(.value != null))' td.json > td-new.json
+          TD_ARN=$(aws ecs register-task-definition --cli-input-json file://td-new.json \
+            --query taskDefinition.taskDefinitionArn --output text)
+          NET=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].networkConfiguration' --output json)
+          OVERRIDES=$(jq -n --arg c "$CONTAINER" --argjson cmd "$COMMAND" \
+            '{containerOverrides: [{name: $c, command: $cmd}]}')
+          TASK=$(aws ecs run-task --cluster "$CLUSTER" --task-definition "$TD_ARN" \
+            --launch-type FARGATE --network-configuration "$NET" --overrides "$OVERRIDES" \
+            --started-by "gh-migrate-${GITHUB_SHA::7}" --query 'tasks[0].taskArn' --output text)
+          echo "Tarea de migraciones: $TASK"
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
+          CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" \
+            --query "tasks[0].containers[?name=='$CONTAINER'].exitCode | [0]" --output text)
+          echo "exitCode=$CODE"
+          if [ "$CODE" != "0" ]; then
+            echo "::error::Las migraciones fallaron (código $CODE). No se despliega."
+            exit 1
+          fi
+
+  deploy:
+    needs: [build, migrate]
+    # Corre aunque migrate se haya saltado, pero nunca si falló.
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.migrate.result != 'failure' }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        target: ${{ fromJSON(inputs.services) }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Current task definition
+        run: |
+          aws ecs describe-task-definition --task-definition "${{ matrix.target.service }}" \
+            --query taskDefinition > task-definition.json
+
+      - id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ matrix.target.container }}
+          image: ${{ needs.build.outputs.image }}
+
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          cluster: ${{ inputs.cluster }}
+          service: ${{ matrix.target.service }}
+          wait-for-service-stability: true
+
+  health:
+    needs: deploy
+    if: inputs.health-url != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the service answers
+        env:
+          URL: ${{ inputs.health-url }}
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 10 "$URL" > /dev/null; then
+              echo "Desplegado y sano"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$URL no responde 2xx tras el despliegue"
+          exit 1
