@@ -7,7 +7,17 @@
 set -e
 DRAIN_SECONDS="${DRAIN_SECONDS:-15}"
 
-uvicorn app.main:app --host 0.0.0.0 --port 8090 --workers 2 \
+# Trazas X-Ray (control 50): solo cuando la tarea trae el colector ADOT, que define
+# OTEL_EXPORTER_OTLP_ENDPOINT. Sin cuerpos de petición ni prompts (dato de salud).
+RUN=""
+if [ -n "${OTEL_EXPORTER_OTLP_ENDPOINT:-}" ]; then
+  export OTEL_TRACES_EXPORTER=otlp OTEL_METRICS_EXPORTER=none OTEL_LOGS_EXPORTER=none
+  export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf OTEL_PYTHON_ID_GENERATOR=xray
+  export OTEL_PYTHON_FASTAPI_EXCLUDED_URLS="health"
+  RUN="opentelemetry-instrument"
+fi
+
+$RUN uvicorn app.main:app --host 0.0.0.0 --port 8090 --workers 2 \
   --proxy-headers --forwarded-allow-ips "*" &
 PID=$!
 
