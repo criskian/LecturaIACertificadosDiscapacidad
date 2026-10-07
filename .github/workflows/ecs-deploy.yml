@@ -136,6 +136,8 @@ jobs:
 
       # Registra la task def del primer servicio con la imagen nueva y corre las migraciones
       # una sola vez, con la red de ese servicio. Solo si terminan con código 0 se sigue.
+      # Sin `user`: la imagen de migración (otra etapa del Dockerfile) puede no tener el
+      # usuario de la imagen final ("no users found" al arrancar).
       - name: Run migrations as a one-off Fargate task
         env:
           IMAGE: ${{ needs.build.outputs.migrate-image }}
@@ -148,7 +150,7 @@ jobs:
           CONTAINER=$(jq -r '.[0].container' <<< "$SERVICES")
           aws ecs describe-task-definition --task-definition "$SERVICE" --query taskDefinition > td.json
           jq --arg img "$IMAGE" --arg c "$CONTAINER" '
-            .containerDefinitions |= map(if .name == $c then .image = $img else . end)
+            .containerDefinitions |= map(if .name == $c then (.image = $img | del(.user)) else . end)
             | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
                requiresCompatibilities, cpu, memory, runtimePlatform}
             | with_entries(select(.value != null))' td.json > td-new.json
