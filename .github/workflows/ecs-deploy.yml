@@ -152,7 +152,7 @@ jobs:
           jq --arg img "$IMAGE" --arg c "$CONTAINER" '
             .containerDefinitions |= map(if .name == $c then (.image = $img | del(.user)) else . end)
             | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
-               requiresCompatibilities, cpu, memory, runtimePlatform}
+               requiresCompatibilities, cpu, memory, runtimePlatform, volumes}
             | with_entries(select(.value != null))' td.json > td-new.json
           TD_ARN=$(aws ecs register-task-definition --cli-input-json file://td-new.json \
             --query taskDefinition.taskDefinitionArn --output text)
